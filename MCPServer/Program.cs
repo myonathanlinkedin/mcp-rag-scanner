@@ -1,3 +1,4 @@
+using MCP.Server.Tools;
 using Serilog;
 using Serilog.Extensions.Logging;
 
@@ -17,11 +18,13 @@ builder.Logging.ClearProviders();
 builder.Logging.AddProvider(new SerilogLoggerProvider(Log.Logger));
 
 // Register HttpClient for dependency injection
-builder.Services.AddHttpClient<IdentityTools>();
+builder.Services.AddHttpClient<IdentityTools>(); 
+builder.Services.AddHttpClient<RAGTools>();
 
 builder.Services.AddMcpServer()
     .WithHttpTransport()
-    .WithTools<IdentityTools>();
+    .WithTools<IdentityTools>()
+    .WithTools<RAGTools>();
 
 var app = builder.Build();
 
