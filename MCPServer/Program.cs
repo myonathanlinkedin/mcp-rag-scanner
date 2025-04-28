@@ -17,11 +17,11 @@ builder.Logging.ClearProviders();
 builder.Logging.AddProvider(new SerilogLoggerProvider(Log.Logger));
 
 // Register HttpClient for dependency injection
-builder.Services.AddHttpClient<APITools>();
+builder.Services.AddHttpClient<IdentityTools>();
 
 builder.Services.AddMcpServer()
     .WithHttpTransport()
-    .WithTools<APITools>();
+    .WithTools<IdentityTools>();
 
 var app = builder.Build();
 

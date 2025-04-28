@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Net.Http.Headers;
 
 [McpServerToolType]
-public sealed class APITools
+public sealed class IdentityTools
 {
     private const string JsonMediaType = "application/json";
     private const string RegisterDescription = "Register a user account. Upon successful registration, an email will be sent containing your login details. Please check your inbox for your email address and password. The password is provided for your convenience; it is recommended that you change it after your first login.";
@@ -15,7 +15,7 @@ public sealed class APITools
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _baseUrl;
 
-    public APITools(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+    public IdentityTools(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
         _httpClientFactory = httpClientFactory;
         _baseUrl = configuration.GetSection("MCP:BaseUrl").Value;

@@ -12,6 +12,7 @@ builder.Services
    .AddIdentityWebComponents()
    .AddTokenAuthentication(builder.Configuration)
    .AddRAGScannerInfrastructure()
+   .AddRAGScannerWebComponents()
    .AddEventSourcing()
    .AddModelBinders()
    .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "Web API", Version = "v1" }))
@@ -27,7 +28,8 @@ builder.Services
        options.Cookie.SameSite = SameSiteMode.Lax;
        options.IdleTimeout = TimeSpan.FromMinutes(30);
    })
-   .AddHttpContextAccessor();
+   .AddHttpContextAccessor()
+   .AddHttpClient<IVectorStoreService, VectorStoreService>();
 
 Log.Logger = new LoggerConfiguration()
    .WriteTo.Console()

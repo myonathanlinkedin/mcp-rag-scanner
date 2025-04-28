@@ -16,7 +16,9 @@
       <ProjectReference Include="..\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj" />
       <ProjectReference Include="..\Identity\Identity.Web\Identity.Web.csproj" />
       <ProjectReference Include="..\MCPClient\MCP.Client.csproj" />
+      <ProjectReference Include="..\Rag.Scanner\RAGScanner.Application.csproj" />
       <ProjectReference Include="..\RAGScanner.Infrastructure\RAGScanner.Infrastructure.csproj" />
+      <ProjectReference Include="..\RAGScanner.Web\RAGScanner.Web.csproj" />
     </ItemGroup>
 
     <ItemGroup>

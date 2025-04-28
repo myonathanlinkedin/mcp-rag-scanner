@@ -7,7 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Features\" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.Web\Common.Web.csproj" />
+    <ProjectReference Include="..\Rag.Scanner\RAGScanner.Application.csproj" />
   </ItemGroup>
 
 </Project>
