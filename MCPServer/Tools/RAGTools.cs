@@ -40,7 +40,7 @@ namespace MCP.Server.Tools
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                var response = await client.PostAsJsonAsync("/api/RAGScanner/ScanUrl", payload);
+                var response = await client.PostAsJsonAsync("/api/RAGScanner/ScanUrl/ScanUrl", payload);
 
                 if (response.IsSuccessStatusCode)
                 {

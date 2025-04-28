@@ -6,11 +6,12 @@ using System.Reflection;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-   .AddCommonApplication(builder.Configuration,Assembly.GetExecutingAssembly())
+   .AddCommonApplication(builder.Configuration, Assembly.GetExecutingAssembly())
    .AddIdentityApplication(builder.Configuration)
    .AddIdentityInfrastructure(builder.Configuration)
    .AddIdentityWebComponents()
    .AddTokenAuthentication(builder.Configuration)
+   .AddRAGScannerApplication(builder.Configuration)
    .AddRAGScannerInfrastructure()
    .AddRAGScannerWebComponents()
    .AddEventSourcing()

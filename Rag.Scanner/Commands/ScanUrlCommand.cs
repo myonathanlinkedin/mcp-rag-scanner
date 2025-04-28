@@ -82,14 +82,14 @@ public class ScanUrlCommand : IRequest<Result>
         {
             var requestBody = new
             {
-                model = applicationSettings.Api.LlmModel,
+                model = applicationSettings.Api.EmbeddingModel,
                 input = content
             };
 
             var jsonRequest = JsonConvert.SerializeObject(requestBody);
             var contentRequest = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
-            var response = await httpClient.PostAsync($"{applicationSettings.Api.Endpoint}/embeddings", contentRequest, cancellationToken);
+            var response = await httpClient.PostAsync($"{applicationSettings.Api.Endpoint}/v1/embeddings", contentRequest, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {

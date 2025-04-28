@@ -6,22 +6,26 @@ using Microsoft.Extensions.DependencyInjection;
 public static class RAGScannerApplicationConfiguration
 {
     public static IServiceCollection AddRAGScannerApplication(
-        this IServiceCollection services,
-        IConfiguration configuration)
+    this IServiceCollection services,
+    IConfiguration configuration)
     {
         var assembly = Assembly.GetExecutingAssembly();
 
-        // Register MediatR Handlers automatically
+        // ⬇️ Register ApplicationSettings
+        var appSettings = configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>();
+        services.AddSingleton(appSettings);
+
+        // Register MediatR Handlers
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
 
-        // Only register "real" services: exclude classes without constructors or only properties
+        // Scan and register other services
         services.Scan(scan => scan
             .FromAssemblies(assembly)
             .AddClasses(classes => classes.Where(type =>
-                !type.Name.EndsWith("Command") &&  // ❌ exclude Command classes
-                !type.Name.EndsWith("Query") &&    // ❌ optionally exclude Query classes
-                !type.IsAssignableTo(typeof(IRequest<>)) && // ❌ extra safe
-                !type.IsAssignableTo(typeof(IRequest))      // ❌ extra safe
+                !type.Name.EndsWith("Command") &&
+                !type.Name.EndsWith("Query") &&
+                !type.IsAssignableTo(typeof(IRequest<>)) &&
+                !type.IsAssignableTo(typeof(IRequest))
             ))
             .AsImplementedInterfaces()
             .WithScopedLifetime()

@@ -23,11 +23,10 @@ public static class IdentityInfrastructureConfiguration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var resetTokenExpirationSeconds = configuration["ApplicationSettings:ResetTokenExpirationSeconds"];
-        if (!int.TryParse(resetTokenExpirationSeconds, out int resetTokenExpiration))
-        {
-            resetTokenExpiration = 300; // default 5 minutes
-        }
+        // Bind ApplicationSettings from configuration
+        var appSettings = configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>();
+
+        var resetTokenExpirationSeconds = appSettings.ResetTokenExpirationSeconds;
 
         services
             .AddIdentity<User, IdentityRole>(options =>
@@ -47,7 +46,7 @@ public static class IdentityInfrastructureConfiguration
 
         services.Configure<DataProtectionTokenProviderOptions>(options =>
         {
-            options.TokenLifespan = TimeSpan.FromSeconds(resetTokenExpiration);
+            options.TokenLifespan = TimeSpan.FromSeconds(resetTokenExpirationSeconds);
         });
 
         return services;

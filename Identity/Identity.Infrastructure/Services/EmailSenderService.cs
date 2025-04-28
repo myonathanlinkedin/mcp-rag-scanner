@@ -2,28 +2,33 @@
 using Microsoft.Extensions.Configuration;
 using System.Net;
 using System.Net.Mail;
+using System.Threading.Tasks;
 
 public class EmailSenderService : IEmailSender
 {
-    private readonly IConfiguration configuration;
+    private readonly ApplicationSettings _applicationSettings;
 
     public EmailSenderService(IConfiguration configuration)
     {
-        this.configuration = configuration;
+        // Bind the ApplicationSettings to the class
+        _applicationSettings = configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>();
     }
 
     public async Task SendEmailAsync(string toEmail, string subject, string body)
     {
-        var smtpClient = new SmtpClient(configuration["MailHog:SmtpServer"])
+        // Access the MailHog settings through ApplicationSettings
+        var mailhogSettings = _applicationSettings.MailHog;
+
+        var smtpClient = new SmtpClient(mailhogSettings.SmtpServer)
         {
-            Port = int.Parse(configuration["MailHog:SmtpPort"]),
+            Port = mailhogSettings.SmtpPort,
             Credentials = new NetworkCredential("user", "password"), // You can leave this as default for MailHog
             EnableSsl = false
         };
 
         var mailMessage = new MailMessage
         {
-            From = new MailAddress(configuration["MailHog:FromAddress"]),
+            From = new MailAddress(mailhogSettings.FromAddress),
             Subject = subject,
             Body = body,
             IsBodyHtml = true

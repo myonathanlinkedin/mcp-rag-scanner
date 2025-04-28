@@ -21,9 +21,8 @@ public static class InfrastructureConfiguration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var jwksUrl = configuration.GetSection("JwtSettings").GetValue<string>("JwksUrl");
-        var issuer = configuration.GetSection("ApplicationSettings").GetValue<string>("Issuer");
-        var audience = configuration.GetSection("ApplicationSettings").GetValue<string>("Audience");
+        var appSettings = configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>()
+            ?? throw new ArgumentNullException(nameof(ApplicationSettings));
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -34,15 +33,15 @@ public static class InfrastructureConfiguration
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = issuer,
+                    ValidIssuer = appSettings.Issuer,
                     ValidateAudience = true,
-                    ValidAudience = audience,
+                    ValidAudience = appSettings.Audience,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKeyResolver = (token, securityToken, kid, validationParameters) =>
                     {
                         using var httpClient = new HttpClient();
-                        var jwkJson = httpClient.GetStringAsync(jwksUrl).GetAwaiter().GetResult();
+                        var jwkJson = httpClient.GetStringAsync(appSettings.JwtSettings.JwksUrl).GetAwaiter().GetResult();
                         var jwk = JsonSerializer.Deserialize<JsonWebKey>(jwkJson);
                         return new List<JsonWebKey> { jwk };
                     }
