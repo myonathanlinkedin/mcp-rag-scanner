@@ -1,7 +1,7 @@
 ﻿using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
-internal class ImageService : IImageService
+public class ImageService : IImageService
 {
     private const int ThumbnailWidth = 100;
 

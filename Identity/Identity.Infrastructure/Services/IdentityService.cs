@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.IdentityModel.Tokens;
-using System.Linq;
-using System.Threading.Tasks;
 
 internal class IdentityService : IIdentity
 {
@@ -39,7 +37,7 @@ internal class IdentityService : IIdentity
 
             await emailSenderService.SendEmailAsync(userRequest.Email, subject, body);
 
-            return Result<IUser>.SuccessWith(user);
+            return Result<IUser>.SuccessWith((IUser) user);
         }
 
         return Result<IUser>.Failure(errors);

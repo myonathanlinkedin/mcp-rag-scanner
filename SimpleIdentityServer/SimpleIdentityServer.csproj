@@ -4,7 +4,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <RootNamespace>WebApplication1</RootNamespace>
+        <RootNamespace>SimpleIdentityServer</RootNamespace>
         <UserSecretsId>9362be1d-0805-4906-9421-9d5df554c05e</UserSecretsId>
     </PropertyGroup>
 
@@ -16,6 +16,7 @@
       <ProjectReference Include="..\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj" />
       <ProjectReference Include="..\Identity\Identity.Web\Identity.Web.csproj" />
       <ProjectReference Include="..\MCPClient\MCP.Client.csproj" />
+      <ProjectReference Include="..\RAGScanner.Infrastructure\RAGScanner.Infrastructure.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -31,5 +32,11 @@
         <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.1" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Update="appsettings.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 </Project>

@@ -1,13 +1,17 @@
 ﻿using Microsoft.OpenApi.Models;
 using Serilog;
+using SixLabors.ImageSharp;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
+   .AddCommonApplication(builder.Configuration,Assembly.GetExecutingAssembly())
    .AddIdentityApplication(builder.Configuration)
    .AddIdentityInfrastructure(builder.Configuration)
    .AddIdentityWebComponents()
    .AddTokenAuthentication(builder.Configuration)
+   .AddRAGScannerInfrastructure()
    .AddEventSourcing()
    .AddModelBinders()
    .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "Web API", Version = "v1" }))

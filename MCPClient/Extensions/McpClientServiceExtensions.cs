@@ -1,12 +1,10 @@
-﻿using MCPClient.MCPClientServices;
-using Microsoft.Extensions.AI;
+﻿using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol.Transport;
 using OpenAI;
-using OpenTelemetry.Logs;
 using System.ClientModel;
 
 public static class McpClientServiceExtensions

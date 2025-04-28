@@ -12,6 +12,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
+      <ProjectReference Include="..\..\Identity.Model\Identity.Domain.csproj" />
       <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
     </ItemGroup>
 
