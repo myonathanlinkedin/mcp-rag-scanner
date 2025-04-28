@@ -1,0 +1,228 @@
+{
+	"info": {
+		"_postman_id": "9bf90f50-2789-4b60-b1aa-c16837925b70",
+		"name": "DDD",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "10894690"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\" : \"test@test.com\",\r\n    \"password\" : \"654321\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/Identity/Login/login",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Identity",
+						"Login",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reset Password",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI2NTYxZWM1NC1mZWQ3LTRjZjgtYTVhNi1hYWE4YWQ3OTRlZDMiLCJ1bmlxdWVfbmFtZSI6InRlc3RAdGVzdC5jb20iLCJuYmYiOjE3NDU2MTUwMDksImV4cCI6MTc0NTYxNTMwOSwiaWF0IjoxNzQ1NjE1MDA5LCJpc3MiOiJMb2NhbCBTZXJ2ZXIiLCJhdWQiOiJMb2NhbCBBdWRpZW5jZSJ9.BJXCeK5W8KcBYxoo78hXZrGgUhG5kn4flf3GxFSjkNzc2zC09dqleNsjnQYtMNhHpWwZh4aK5xFbM1_CB3KyBCRCGIJgOU9aR4_wZq_3-rUBmAw19ioJPtsMIYaKbCchTx2GWBc0YDNalpToufJUqGBKN2CUYe3kiO29mOsvsQxmMEfgukKfbAWlWAPEpM6T1k_ojgj4G1PSJx7QBBBv2uFpXA1tPZ96Qu0HvJaONto2L5bsfK-nS0yJmAAbw1coZfMN4MtCuyXazi8fMVxtxuC1lqjzePBoh0VVRtZhA72VzWKzQx5fAcr3mshoDMafXxvFoJMOaqRq0gBzMgmerA",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"currentPassword\": \"Admin01\",\r\n  \"newPassword\": \"Test01\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/Identity/ChangePassword/ChangePassword",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Identity",
+						"ChangePassword",
+						"ChangePassword"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Public Key",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:7190/api/Jwks/GetPublicKey/GetPublicKey",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Jwks",
+						"GetPublicKey",
+						"GetPublicKey"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Register User",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\" : \"testkan@test.com\",\r\n  \"password\": \"123456\",\r\n  \"confirmPassword\": \"123456\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/identity/Register/Register",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"identity",
+						"Register",
+						"Register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send User Prompt 2",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Prompt\" : \"Bro Server! now please login me email: jackcorp@test666.com and password: GaOQtM & change the password with 123456\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/Prompt/SendUserPrompt/SendUserPrompt",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Prompt",
+						"SendUserPrompt",
+						"SendUserPrompt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send User Prompt 3",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Prompt\" : \"Bro please help me to reset password for this email: jackcorp@test666.com\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/Prompt/SendUserPrompt/SendUserPrompt",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Prompt",
+						"SendUserPrompt",
+						"SendUserPrompt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send User Prompt 1",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Prompt\" : \"hei dawg! my email: jackcorp1@test666.com please help me to register\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/Prompt/SendUserPrompt/SendUserPrompt",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Prompt",
+						"SendUserPrompt",
+						"SendUserPrompt"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
