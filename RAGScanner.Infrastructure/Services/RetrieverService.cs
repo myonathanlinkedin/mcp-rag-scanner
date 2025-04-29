@@ -1,7 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Diagnostics;
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Diagnostics;
 
 public class RetrieverService : IRetrieverService
 {
@@ -29,7 +34,7 @@ public class RetrieverService : IRetrieverService
     {
         logger.LogInformation("Retrieving all documents from vector store (full fetch)");
 
-        var endpoint = $"{applicationSettings.Qdrant.Endpoint}/collections/{applicationSettings.Qdrant.CollectionName}/points/query";
+        var endpoint = $"{applicationSettings.Qdrant.Endpoint}/collections/{applicationSettings.Qdrant.CollectionName}/points/scroll";
 
         int offset = 0;
         int limit = GetSmartLimit();
@@ -43,7 +48,9 @@ public class RetrieverService : IRetrieverService
             var payload = new
             {
                 limit = limit,
-                offset = offset
+                offset = offset,
+                with_payload = true,
+                with_vector = true
             };
 
             var jsonContent = JsonConvert.SerializeObject(payload);
@@ -64,14 +71,14 @@ public class RetrieverService : IRetrieverService
                 var responseBodyContent = await response.Content.ReadAsStringAsync();
                 var qdrantResponse = JsonConvert.DeserializeObject<QdrantQueryResponse>(responseBodyContent);
 
-                if (qdrantResponse?.Results == null || qdrantResponse.Results.Count == 0)
+                if (qdrantResponse?.Result == null || qdrantResponse.Result.Count == 0)
                 {
                     break;
                 }
 
-                foreach (var result in qdrantResponse.Results)
+                foreach (var point in qdrantResponse.Result)
                 {
-                    allDocumentVectors.Add(MapResultToDocumentVector(result));
+                    allDocumentVectors.Add(MapResultToDocumentVector(point));
                 }
 
                 offset += limit;
@@ -103,7 +110,7 @@ public class RetrieverService : IRetrieverService
             return Result<List<DocumentVector>>.Failure(new List<string> { "Embedding generation failed." });
         }
 
-        var endpoint = $"{applicationSettings.Qdrant.Endpoint}/collections/{applicationSettings.Qdrant.CollectionName}/points/query";
+        var endpoint = $"{applicationSettings.Qdrant.Endpoint}/collections/{applicationSettings.Qdrant.CollectionName}/points/search";
 
         int topK = GetSmartTopK();
 
@@ -112,7 +119,7 @@ public class RetrieverService : IRetrieverService
             vector = embeddingVector,
             top = topK,
             with_payload = true,
-            with_vector = false
+            with_vector = true
         };
 
         var jsonContent = JsonConvert.SerializeObject(payload);
@@ -135,11 +142,11 @@ public class RetrieverService : IRetrieverService
 
             var matchingDocuments = new List<DocumentVector>();
 
-            if (qdrantResponse?.Results != null)
+            if (qdrantResponse?.Result != null)
             {
-                foreach (var result in qdrantResponse.Results)
+                foreach (var point in qdrantResponse.Result)
                 {
-                    matchingDocuments.Add(MapResultToDocumentVector(result));
+                    matchingDocuments.Add(MapResultToDocumentVector(point));
                 }
             }
 
@@ -152,21 +159,19 @@ public class RetrieverService : IRetrieverService
         }
     }
 
-    private DocumentVector MapResultToDocumentVector(QdrantQueryResult result)
+    private DocumentVector MapResultToDocumentVector(QdrantResult result)
     {
         return new DocumentVector
         {
             Metadata = new DocumentMetadata
             {
-                ContentHash = result.Id,
+                ContentHash = result.Id, // Using 'Id' as content hash
                 Url = result.Payload?.Url,
                 SourceType = result.Payload?.SourceType,
                 Title = result.Payload?.Title,
-                ScrapedAt = DateTime.TryParse(result.Payload?.ScrapedAt, out DateTime parsedDate)
-                    ? parsedDate
-                    : default(DateTime)
+                ScrapedAt = result.Payload?.ScrapedAt ?? default(DateTime) // Use null-coalescing operator to handle nullable DateTime
             },
-            Embedding = null
+            Embedding = result.Vector.ToArray() // Convert the vector to float array
         };
     }
 

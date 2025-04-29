@@ -163,9 +163,9 @@ public class VectorStoreService : IVectorStoreService
         var responseBodyContent = await response.Content.ReadAsStringAsync();
         var qdrantResponse = JsonConvert.DeserializeObject<QdrantQueryResponse>(responseBodyContent);
 
-        if (qdrantResponse?.Results != null)
+        if (qdrantResponse?.Result != null)
         {
-            foreach (var result in qdrantResponse.Results)
+            foreach (var result in qdrantResponse.Result)
             {
                 var documentVector = new DocumentVector
                 {
@@ -176,9 +176,9 @@ public class VectorStoreService : IVectorStoreService
                         SourceType = result.Payload?.SourceType,
                         Title = result.Payload?.Title,
                         // Use TryParse for ScrapedAt
-                        ScrapedAt = DateTime.TryParse(result.Payload?.ScrapedAt, out DateTime parsedDate) ? parsedDate : default
+                        ScrapedAt = result.Payload?.ScrapedAt ?? default(DateTime) // Use null-coalescing operator to handle nullable DateTime
                     },
-                    Embedding = result.Vector
+                    Embedding =  result.Vector.ToArray()
                 };
 
                 vectors.Add(documentVector);

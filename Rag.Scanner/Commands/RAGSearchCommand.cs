@@ -45,7 +45,8 @@ public class RAGSearchCommand : IRequest<Result<List<RAGSearchResult>>>
                     Content = doc.Metadata.Title, // Assuming content is part of the title (adjust as needed)
                     Url = doc.Metadata.Url,
                     Title = doc.Metadata.Title,
-                    Score = score
+                    Score = score,
+                    Vector = documentEmbedding // Store the vector here
                 };
             }).ToList();
 

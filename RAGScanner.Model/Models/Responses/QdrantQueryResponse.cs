@@ -1,34 +1,26 @@
-﻿using Newtonsoft.Json;
-
-public class QdrantQueryResponse
+﻿public class QdrantQueryResponse
 {
-    [JsonProperty("results")]
-    public List<QdrantQueryResult> Results { get; set; }
+    public List<QdrantResult> Result { get; set; }
+
+    public QdrantQueryResponse()
+    {
+        Result = new List<QdrantResult>();
+    }
 }
 
-public class QdrantQueryResult
+public class QdrantResult
 {
-    [JsonProperty("id")]
     public string Id { get; set; }
-
-    [JsonProperty("vector")]
-    public float[] Vector { get; set; }
-
-    [JsonProperty("payload")]
+    public int Version { get; set; }
+    public float Score { get; set; }
     public Payload Payload { get; set; }
+    public List<float> Vector { get; set; }
 }
 
 public class Payload
 {
-    [JsonProperty("url")]
     public string Url { get; set; }
-
-    [JsonProperty("sourceType")]
     public string SourceType { get; set; }
-
-    [JsonProperty("title")]
     public string Title { get; set; }
-
-    [JsonProperty("scrapedAt")]
-    public string ScrapedAt { get; set; }
+    public DateTime ScrapedAt { get; set; }
 }
