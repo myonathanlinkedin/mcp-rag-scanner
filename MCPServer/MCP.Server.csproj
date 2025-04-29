@@ -30,6 +30,7 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\Common\Common.Application\Common.Application.csproj" />
+	  <ProjectReference Include="..\RAGScanner.Model\RAGScanner.Model.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Update="appsettings.json">

@@ -68,9 +68,9 @@ namespace MCP.Server.Tools
 
         // New RAGSearch functionality
         [McpServerTool, Description(RAGSearchDescription)]
-        public async Task<string> RAGSearchAsync(
-            [Description("The search query to enhance using RAG method")] string query,
-            [Description("Bearer token for authentication")] string token)
+        public async Task<List<RAGSearchResult>> RAGSearchAsync(
+          [Description("The search query to enhance using RAG method")] string query,
+          [Description("Bearer token for authentication")] string token)
         {
             try
             {
@@ -89,21 +89,22 @@ namespace MCP.Server.Tools
 
                 if (response.IsSuccessStatusCode)
                 {
+                    var result = await response.Content.ReadFromJsonAsync<List<RAGSearchResult>>();
                     Log.Information("Successfully performed RAG search with query: {Query}", query);
-                    return "Successfully performed the RAG search.";
+                    return result ?? new List<RAGSearchResult>();
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
                     Log.Error("Failed to perform RAG search for query: {Query}, StatusCode: {StatusCode}, Error: {Error}",
                         query, response.StatusCode, errorContent);
-                    return $"Failed to perform RAG search. Status code: {response.StatusCode}";
+                    return new List<RAGSearchResult>();
                 }
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "An exception occurred while performing RAG search for query: {Query}", query);
-                return "An error occurred while performing the RAG search.";
+                return new List<RAGSearchResult>();
             }
         }
     }
