@@ -1,18 +1,20 @@
 ﻿using Microsoft.OpenApi.Models;
 using Serilog;
 using SixLabors.ImageSharp;
+using System.Configuration;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
+   .AddSingleton(builder.Configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>())
    .AddCommonApplication(builder.Configuration, Assembly.GetExecutingAssembly())
    .AddIdentityApplication(builder.Configuration)
    .AddIdentityInfrastructure(builder.Configuration)
    .AddIdentityWebComponents()
    .AddTokenAuthentication(builder.Configuration)
    .AddRAGScannerApplication(builder.Configuration)
-   .AddRAGScannerInfrastructure()
+   .AddRAGScannerInfrastructure(builder.Configuration)
    .AddRAGScannerWebComponents()
    .AddEventSourcing()
    .AddModelBinders()

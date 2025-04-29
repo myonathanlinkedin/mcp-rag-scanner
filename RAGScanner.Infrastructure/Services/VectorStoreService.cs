@@ -5,43 +5,43 @@ using System.Text;
 
 public class VectorStoreService : IVectorStoreService
 {
-    private readonly ILogger<VectorStoreService> _logger;
-    private readonly HttpClient _httpClient;
-    private readonly ApplicationSettings.QdrantSettings _qdrantSettings;
-    private readonly string _baseEndpoint;
-    private float _similarityThreshold;
+    private readonly ILogger<VectorStoreService> logger;
+    private readonly HttpClient httpClient;
+    private readonly ApplicationSettings.QdrantSettings qdrantSettings;
+    private readonly string baseEndpoint;
+    private float similarityThreshold;
 
     public VectorStoreService(
         ILogger<VectorStoreService> logger,
         IOptions<ApplicationSettings> appSettings,
         HttpClient httpClient)
     {
-        _logger = logger;
-        _qdrantSettings = appSettings.Value.Qdrant;
-        _httpClient = httpClient;
-        _baseEndpoint = _qdrantSettings.Endpoint.TrimEnd('/');
-        _similarityThreshold = appSettings.Value.Qdrant.SimilarityThreshold; // Load dynamic threshold
+        this.logger = logger;
+        qdrantSettings = appSettings.Value.Qdrant;
+        this.httpClient = httpClient;
+        baseEndpoint = qdrantSettings.Endpoint.TrimEnd('/');
+        similarityThreshold = appSettings.Value.Qdrant.SimilarityThreshold; // Load dynamic threshold
     }
 
     private async Task EnsureCollectionExistsAsync(int vectorSize)
     {
-        var endpoint = $"{_baseEndpoint}/collections/{_qdrantSettings.CollectionName}";
-        var response = await _httpClient.GetAsync(endpoint);
+        var endpoint = $"{baseEndpoint}/collections/{qdrantSettings.CollectionName}";
+        var response = await httpClient.GetAsync(endpoint);
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogWarning("Collection '{CollectionName}' not found. Attempting to create it.", _qdrantSettings.CollectionName);
+            logger.LogWarning("Collection '{CollectionName}' not found. Attempting to create it.", qdrantSettings.CollectionName);
             await CreateCollectionAsync(vectorSize);
         }
         else
         {
-            _logger.LogInformation("Collection '{CollectionName}' exists.", _qdrantSettings.CollectionName);
+            logger.LogInformation("Collection '{CollectionName}' exists.", qdrantSettings.CollectionName);
         }
     }
 
     private async Task CreateCollectionAsync(int vectorSize)
     {
-        var endpoint = $"{_baseEndpoint}/collections/{_qdrantSettings.CollectionName}";
+        var endpoint = $"{baseEndpoint}/collections/{qdrantSettings.CollectionName}";
 
         var payload = new
         {
@@ -55,12 +55,12 @@ public class VectorStoreService : IVectorStoreService
         var jsonContent = JsonConvert.SerializeObject(payload);
         var requestContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PutAsync(endpoint, requestContent);
+        var response = await httpClient.PutAsync(endpoint, requestContent);
 
         if (!response.IsSuccessStatusCode)
         {
             var responseBody = await response.Content.ReadAsStringAsync();
-            _logger.LogError(
+            logger.LogError(
                 "Failed to create collection in Qdrant. StatusCode: {StatusCode}, Reason: {ReasonPhrase}, Response: {ResponseBody}",
                 response.StatusCode,
                 response.ReasonPhrase,
@@ -69,7 +69,7 @@ public class VectorStoreService : IVectorStoreService
             throw new Exception($"Failed to create collection in Qdrant. Status code: {response.StatusCode}");
         }
 
-        _logger.LogInformation("Successfully created collection '{CollectionName}' in Qdrant.", _qdrantSettings.CollectionName);
+        logger.LogInformation("Successfully created collection '{CollectionName}' in Qdrant.", qdrantSettings.CollectionName);
     }
 
     public async Task SaveDocumentAsync(DocumentVector documentVector, int vectorSize)
@@ -81,11 +81,11 @@ public class VectorStoreService : IVectorStoreService
         // Use similarity check to determine if the vector should be stored
         foreach (var existingVector in existingVectors)
         {
-            var similarity = ComputeCosineSimilarity(documentVector.Embedding, existingVector.Embedding);
+            var similarity = VectorUtility.ComputeCosineSimilarity(documentVector.Embedding, existingVector.Embedding);
 
-            if (similarity >= _similarityThreshold)
+            if (similarity >= similarityThreshold)
             {
-                _logger.LogInformation("Vector is too similar to an existing one (Similarity: {Similarity}). Skipping save.", similarity);
+                logger.LogInformation("Vector is too similar to an existing one (Similarity: {Similarity}). Skipping save.", similarity);
                 return;  // Skip saving the vector if it's too similar
             }
         }
@@ -113,13 +113,13 @@ public class VectorStoreService : IVectorStoreService
         var jsonContent = JsonConvert.SerializeObject(payload);
         var requestContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-        var endpoint = $"{_baseEndpoint}/collections/{_qdrantSettings.CollectionName}/points";
-        var response = await _httpClient.PutAsync(endpoint, requestContent);
+        var endpoint = $"{baseEndpoint}/collections/{qdrantSettings.CollectionName}/points";
+        var response = await httpClient.PutAsync(endpoint, requestContent);
 
         if (!response.IsSuccessStatusCode)
         {
             var responseBody = await response.Content.ReadAsStringAsync();
-            _logger.LogError(
+            logger.LogError(
                 "Failed to save vector to Qdrant. StatusCode: {StatusCode}, Reason: {ReasonPhrase}, Response: {ResponseBody}",
                 response.StatusCode,
                 response.ReasonPhrase,
@@ -128,36 +128,13 @@ public class VectorStoreService : IVectorStoreService
             throw new Exception($"Failed to save document vector to Qdrant. Status code: {response.StatusCode}");
         }
 
-        _logger.LogInformation("Successfully saved vector for URL: {Url}", documentVector.Metadata.Url);
-    }
-
-    // Helper method to compute cosine similarity between two vectors
-    private float ComputeCosineSimilarity(float[] vector1, float[] vector2)
-    {
-        var dotProduct = 0f;
-        var magnitude1 = 0f;
-        var magnitude2 = 0f;
-
-        for (int i = 0; i < vector1.Length; i++)
-        {
-            dotProduct += vector1[i] * vector2[i];
-            magnitude1 += vector1[i] * vector1[i];
-            magnitude2 += vector2[i] * vector2[i];
-        }
-
-        magnitude1 = MathF.Sqrt(magnitude1);
-        magnitude2 = MathF.Sqrt(magnitude2);
-
-        if (magnitude1 == 0 || magnitude2 == 0)
-            return 0f;  // Prevent division by zero
-
-        return dotProduct / (magnitude1 * magnitude2);
+        logger.LogInformation("Successfully saved vector for URL: {Url}", documentVector.Metadata.Url);
     }
 
     // Get existing vectors from Qdrant collection based on query vector
     private async Task<List<DocumentVector>> GetExistingVectorsAsync(float[] queryVector)
     {
-        var endpoint = $"{_baseEndpoint}/collections/{_qdrantSettings.CollectionName}/points/query";
+        var endpoint = $"{baseEndpoint}/collections/{qdrantSettings.CollectionName}/points/query";
         var vectors = new List<DocumentVector>();
 
         var payload = new
@@ -168,12 +145,12 @@ public class VectorStoreService : IVectorStoreService
         var jsonContent = JsonConvert.SerializeObject(payload);
         var requestContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync(endpoint, requestContent);
+        var response = await httpClient.PostAsync(endpoint, requestContent);
 
         if (!response.IsSuccessStatusCode)
         {
             var responseBody = await response.Content.ReadAsStringAsync();
-            _logger.LogError(
+            logger.LogError(
                 "Failed to retrieve vectors from Qdrant. StatusCode: {StatusCode}, Reason: {ReasonPhrase}, Response: {ResponseBody}",
                 response.StatusCode,
                 response.ReasonPhrase,

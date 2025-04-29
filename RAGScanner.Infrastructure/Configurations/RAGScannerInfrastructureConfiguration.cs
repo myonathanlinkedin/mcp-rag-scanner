@@ -2,9 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
-public static class RAGScannerApplicationConfiguration
+public static class RAGScannerInfrastructureConfiguration
 {
-    public static IServiceCollection AddRAGScannerApplication(
+    public static IServiceCollection AddRAGScannerInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {

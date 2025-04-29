@@ -12,13 +12,13 @@ public sealed class IdentityTools
     private const string ChangePasswordDescription = "Change the user's password. A valid Bearer token, obtained from a successful login, is required. After a successful password change, do not expose the token. Briefly explain what the system has done. Advise the user to log in or re-login before proceeding if the password change does not work.";
     private const string ResetPasswordDescription = "Reset the user's password. A new random password will be generated and emailed to the user. Advise the user to log in or re-login before proceeding if the password reset does not work.";
 
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _baseUrl;
+    private readonly IHttpClientFactory httpClientFactory;
+    private readonly string baseUrl;
 
     public IdentityTools(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
-        _httpClientFactory = httpClientFactory;
-        _baseUrl = configuration.GetSection("MCP:BaseUrl").Value;
+        this.httpClientFactory = httpClientFactory;
+        baseUrl = configuration.GetSection("MCP:BaseUrl").Value;
     }
 
     [McpServerTool, Description(RegisterDescription)]
@@ -34,8 +34,8 @@ public sealed class IdentityTools
 
         try
         {
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(_baseUrl);
+            var client = httpClientFactory.CreateClient();
+            client.BaseAddress = new Uri(baseUrl);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
 
@@ -74,8 +74,8 @@ public sealed class IdentityTools
 
         try
         {
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(_baseUrl);
+            var client = httpClientFactory.CreateClient();
+            client.BaseAddress = new Uri(baseUrl);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
 
@@ -118,8 +118,8 @@ public sealed class IdentityTools
 
         try
         {
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(_baseUrl);
+            var client = httpClientFactory.CreateClient();
+            client.BaseAddress = new Uri(baseUrl);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -157,8 +157,8 @@ public sealed class IdentityTools
 
         try
         {
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(_baseUrl);
+            var client = httpClientFactory.CreateClient();
+            client.BaseAddress = new Uri(baseUrl);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
 

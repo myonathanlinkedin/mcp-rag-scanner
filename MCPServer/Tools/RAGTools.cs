@@ -9,17 +9,21 @@ namespace MCP.Server.Tools
     public sealed class RAGTools
     {
         private const string JsonMediaType = "application/json";
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly string _baseUrl;
+        private readonly IHttpClientFactory httpClientFactory;
+        private readonly string baseUrl;
 
         private const string ScanUrlsDescription =
             "Scan one or more URLs, parse the content, and save the resulting document vectors into the vector store. " +
             "You must login in order to use this.";
 
+        private const string RAGSearchDescription =
+            "Search using a Retrieval-Augmented Generation (RAG) method to enhance results. " +
+            "You must login in order to use this.";
+
         public RAGTools(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
-            _httpClientFactory = httpClientFactory;
-            _baseUrl = configuration.GetSection("MCP:BaseUrl").Value;
+            this.httpClientFactory = httpClientFactory;
+            baseUrl = configuration.GetSection("MCP:BaseUrl").Value;
         }
 
         [McpServerTool, Description(ScanUrlsDescription)]
@@ -34,8 +38,8 @@ namespace MCP.Server.Tools
                     Urls = urls
                 };
 
-                var client = _httpClientFactory.CreateClient();
-                client.BaseAddress = new Uri(_baseUrl);
+                var client = httpClientFactory.CreateClient();
+                client.BaseAddress = new Uri(baseUrl);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -59,6 +63,47 @@ namespace MCP.Server.Tools
             {
                 Log.Error(ex, "An exception occurred while scanning URLs: {Urls}", string.Join(", ", urls));
                 return "An error occurred while scanning URLs.";
+            }
+        }
+
+        // New RAGSearch functionality
+        [McpServerTool, Description(RAGSearchDescription)]
+        public async Task<string> RAGSearchAsync(
+            [Description("The search query to enhance using RAG method")] string query,
+            [Description("Bearer token for authentication")] string token)
+        {
+            try
+            {
+                var payload = new
+                {
+                    Query = query
+                };
+
+                var client = httpClientFactory.CreateClient();
+                client.BaseAddress = new Uri(baseUrl);
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await client.PostAsJsonAsync("/api/RAGScanner/RAGSearch/RAGSearch", payload);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Log.Information("Successfully performed RAG search with query: {Query}", query);
+                    return "Successfully performed the RAG search.";
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Log.Error("Failed to perform RAG search for query: {Query}, StatusCode: {StatusCode}, Error: {Error}",
+                        query, response.StatusCode, errorContent);
+                    return $"Failed to perform RAG search. Status code: {response.StatusCode}";
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "An exception occurred while performing RAG search for query: {Query}", query);
+                return "An error occurred while performing the RAG search.";
             }
         }
     }

@@ -2,19 +2,19 @@
 
 public class ScraperService : IScraperService
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<ScraperService> _logger;
+    private readonly IHttpClientFactory httpClientFactory;
+    private readonly ILogger<ScraperService> logger;
 
     public ScraperService(IHttpClientFactory httpClientFactory, ILogger<ScraperService> logger)
     {
-        _httpClientFactory = httpClientFactory;
-        _logger = logger;
+        this.httpClientFactory = httpClientFactory;
+        this.logger = logger;
     }
 
     public async Task<List<ScrapedDocument>> ScrapeUrlsAsync(List<string> urls)
     {
         var documents = new List<ScrapedDocument>();
-        var client = _httpClientFactory.CreateClient();
+        var client = httpClientFactory.CreateClient();
 
         foreach (var url in urls)
         {
@@ -44,7 +44,7 @@ public class ScraperService : IScraperService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error scraping {Url}", url);
+                logger.LogError(ex, "Error scraping {Url}", url);
             }
         }
 

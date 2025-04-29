@@ -1,19 +1,250 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Text;
 
 public class RetrieverService : IRetrieverService
 {
-    private readonly ILogger<RetrieverService> _logger;
+    private readonly ILogger<RetrieverService> logger;
+    private readonly HttpClient httpClient;
+    private readonly string baseEndpoint;
+    private readonly int defaultTopK = 10;
+    private readonly int maxTopK = 50;
+    private readonly ApplicationSettings applicationSettings;
 
-    public RetrieverService(ILogger<RetrieverService> logger)
+    public RetrieverService(
+        ILogger<RetrieverService> logger,
+        HttpClient httpClient,
+        ApplicationSettings applicationSettings)
     {
-        _logger = logger;
+        this.logger = logger;
+        this.httpClient = httpClient;
+        this.applicationSettings = applicationSettings;
+        this.baseEndpoint = applicationSettings.Qdrant.Endpoint;
     }
 
-    public async Task<List<DocumentVector>> RetrieveAllDocumentsAsync()
+    public async Task<Result<List<DocumentVector>>> RetrieveAllDocumentsAsync(CancellationToken cancellationToken)
     {
-        // TODO: Connect to Qdrant and fetch all vectors + metadata
-        _logger.LogInformation("Retrieving all documents from vector store");
+        logger.LogInformation("Retrieving all documents from vector store (full fetch)");
 
-        return await Task.FromResult(new List<DocumentVector>());
+        var endpoint = $"{baseEndpoint}/collections/default_collection/points";
+
+        int offset = 0;
+        int limit = GetSmartLimit();
+
+        var allDocumentVectors = new List<DocumentVector>();
+
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var payload = new
+            {
+                limit = limit,
+                offset = offset
+            };
+
+            var jsonContent = JsonConvert.SerializeObject(payload);
+            var requestContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await httpClient.PostAsync(endpoint, requestContent, cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    logger.LogError("Failed to retrieve vectors. StatusCode: {StatusCode}, Response: {ResponseBody}",
+                        response.StatusCode, responseBody);
+                    return Result<List<DocumentVector>>.Failure(new List<string> { "Failed to retrieve vectors from Qdrant." });
+                }
+
+                var responseBodyContent = await response.Content.ReadAsStringAsync();
+                var qdrantResponse = JsonConvert.DeserializeObject<QdrantQueryResponse>(responseBodyContent);
+
+                if (qdrantResponse?.Results == null || qdrantResponse.Results.Count == 0)
+                {
+                    break;
+                }
+
+                foreach (var result in qdrantResponse.Results)
+                {
+                    allDocumentVectors.Add(MapResultToDocumentVector(result));
+                }
+
+                offset += limit;
+
+                if (allDocumentVectors.Count >= maxTopK * 100) // Arbitrary safety cap
+                {
+                    logger.LogInformation("Reached maximum cap for all document retrieval.");
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error during full document retrieval.");
+                return Result<List<DocumentVector>>.Failure(new List<string> { "Error during document retrieval." });
+            }
+        }
+
+        return Result<List<DocumentVector>>.SuccessWith(allDocumentVectors);
+    }
+
+    public async Task<Result<List<DocumentVector>>> RetrieveDocumentsByQueryAsync(string queryText, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Retrieving documents matching query: {QueryText}", queryText);
+
+        var embeddingVector = await GenerateEmbeddingAsync(queryText, cancellationToken);
+
+        if (embeddingVector == null || embeddingVector.Length == 0)
+        {
+            logger.LogError("Failed to generate embedding for query text.");
+            return Result<List<DocumentVector>>.Failure(new List<string> { "Embedding generation failed." });
+        }
+
+        var endpoint = $"{baseEndpoint}/collections/default_collection/points/search";
+
+        int topK = GetSmartTopK();
+
+        var payload = new
+        {
+            vector = embeddingVector,
+            top = topK,
+            with_payload = true,
+            with_vector = false
+        };
+
+        var jsonContent = JsonConvert.SerializeObject(payload);
+        var requestContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+        try
+        {
+            var response = await httpClient.PostAsync(endpoint, requestContent, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                logger.LogError("Failed to search vectors. StatusCode: {StatusCode}, Response: {ResponseBody}",
+                    response.StatusCode, responseBody);
+                return Result<List<DocumentVector>>.Failure(new List<string> { "Failed to search vectors in Qdrant." });
+            }
+
+            var responseBodyContent = await response.Content.ReadAsStringAsync();
+            var qdrantResponse = JsonConvert.DeserializeObject<QdrantQueryResponse>(responseBodyContent);
+
+            var matchingDocuments = new List<DocumentVector>();
+
+            if (qdrantResponse?.Results != null)
+            {
+                foreach (var result in qdrantResponse.Results)
+                {
+                    matchingDocuments.Add(MapResultToDocumentVector(result));
+                }
+            }
+
+            return Result<List<DocumentVector>>.SuccessWith(matchingDocuments);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during document search.");
+            return Result<List<DocumentVector>>.Failure(new List<string> { "Error during document search." });
+        }
+    }
+
+    private async Task<float[]> GenerateEmbeddingAsync(string content, CancellationToken cancellationToken)
+    {
+        var requestBody = new
+        {
+            model = applicationSettings.Api.EmbeddingModel,
+            input = content
+        };
+
+        var jsonRequest = JsonConvert.SerializeObject(requestBody);
+        var contentRequest = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+        var response = await httpClient.PostAsync($"{applicationSettings.Api.Endpoint}/embeddings", contentRequest, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new Exception($"Failed to generate embedding. Status Code: {response.StatusCode}. Response: {responseBody}");
+        }
+
+        var responseString = await response.Content.ReadAsStringAsync(cancellationToken);
+        var embeddingResponse = JsonConvert.DeserializeObject<EmbeddingResponse>(responseString)
+            ?? throw new Exception("Failed to deserialize embedding response.");
+
+        if (embeddingResponse.Data == null || embeddingResponse.Data.Count == 0)
+        {
+            throw new Exception("Embedding response contains no data.");
+        }
+
+        return embeddingResponse.Data[0].Embedding;
+    }
+
+    private DocumentVector MapResultToDocumentVector(QdrantQueryResult result)
+    {
+        return new DocumentVector
+        {
+            Metadata = new DocumentMetadata
+            {
+                ContentHash = result.Id,
+                Url = result.Payload?.Url,
+                SourceType = result.Payload?.SourceType,
+                Title = result.Payload?.Title,
+                ScrapedAt = DateTime.TryParse(result.Payload?.ScrapedAt, out DateTime parsedDate)
+                    ? parsedDate
+                    : default
+            },
+            Embedding = null
+        };
+    }
+
+    private int GetSmartTopK()
+    {
+        if (SystemUnderLoad())
+        {
+            logger.LogWarning("System under load. Reducing top K results.");
+            return Math.Max(3, defaultTopK / 2);
+        }
+
+        return defaultTopK;
+    }
+
+    private int GetSmartLimit()
+    {
+        if (SystemUnderLoad())
+        {
+            logger.LogWarning("System under load. Reducing document fetch limit.");
+            return Math.Max(100, defaultTopK * 5);
+        }
+
+        return defaultTopK * 10;
+    }
+
+    private bool SystemUnderLoad()
+    {
+        const double cpuThreshold = 80.0;
+        const long memoryThresholdBytes = 80L * 1024 * 1024 * 1024; // 80 GB
+
+        var cpuUsage = GetCpuUsagePercentage();
+        var memoryUsage = GetMemoryUsage();
+
+        return cpuUsage > cpuThreshold || memoryUsage > memoryThresholdBytes;
+    }
+
+    private double GetCpuUsagePercentage()
+    {
+        using var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+        cpuCounter.NextValue();
+        Thread.Sleep(500);
+        return cpuCounter.NextValue();
+    }
+
+    private long GetMemoryUsage()
+    {
+        var availableMemory = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
+        var totalMemory = GC.GetGCMemoryInfo().TotalCommittedBytes;
+        return totalMemory - availableMemory;
     }
 }

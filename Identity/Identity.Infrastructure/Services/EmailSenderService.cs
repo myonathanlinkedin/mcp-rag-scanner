@@ -6,18 +6,18 @@ using System.Threading.Tasks;
 
 public class EmailSenderService : IEmailSender
 {
-    private readonly ApplicationSettings _applicationSettings;
+    private readonly ApplicationSettings applicationSettings;
 
     public EmailSenderService(IConfiguration configuration)
     {
         // Bind the ApplicationSettings to the class
-        _applicationSettings = configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>();
+        applicationSettings = configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>();
     }
 
     public async Task SendEmailAsync(string toEmail, string subject, string body)
     {
         // Access the MailHog settings through ApplicationSettings
-        var mailhogSettings = _applicationSettings.MailHog;
+        var mailhogSettings = applicationSettings.MailHog;
 
         var smtpClient = new SmtpClient(mailhogSettings.SmtpServer)
         {
