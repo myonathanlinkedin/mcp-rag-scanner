@@ -1,5 +1,7 @@
 ﻿using MediatR;
 using Newtonsoft.Json;
+using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 
 public class ScanUrlCommand : IRequest<Result>
@@ -28,9 +30,7 @@ public class ScanUrlCommand : IRequest<Result>
             this.httpClient = httpClient;
         }
 
-        public async Task<Result> Handle(
-            ScanUrlCommand request,
-            CancellationToken cancellationToken)
+        public async Task<Result> Handle(ScanUrlCommand request, CancellationToken cancellationToken)
         {
             // 1. Scrape all URLs
             var scrapedDocuments = await scraperService.ScrapeUrlsAsync(request.Urls);
@@ -62,7 +62,7 @@ public class ScanUrlCommand : IRequest<Result>
                     Url = scrapedDocument.Url,
                     SourceType = scrapedDocument.IsPdf ? "pdf" : "html",
                     Title = ExtractTitle(parsedContent),
-                    ContentHash = HashHelper.ComputeHash(parsedContent),
+                    ContentHash = HashHelper.ComputeDeterministicGuid(parsedContent),
                     ScrapedAt = scrapedDocument.ScrapedAt
                 };
 
@@ -72,7 +72,11 @@ public class ScanUrlCommand : IRequest<Result>
                     Metadata = metadata
                 };
 
-                await vectorStoreService.SaveDocumentAsync(documentVector);
+                // Calculate the vector size
+                int vectorSize = embedding.Length;
+
+                // Save the document vector with the vector size
+                await vectorStoreService.SaveDocumentAsync(documentVector, vectorSize);
             }
 
             return Result.Success;
@@ -89,11 +93,12 @@ public class ScanUrlCommand : IRequest<Result>
             var jsonRequest = JsonConvert.SerializeObject(requestBody);
             var contentRequest = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
-            var response = await httpClient.PostAsync($"{applicationSettings.Api.Endpoint}/v1/embeddings", contentRequest, cancellationToken);
+            var response = await httpClient.PostAsync($"{applicationSettings.Api.Endpoint}/embeddings", contentRequest, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Failed to generate embedding. Status Code: {response.StatusCode}");
+                var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new Exception($"Failed to generate embedding. Status Code: {response.StatusCode}. Response: {responseBody}");
             }
 
             var responseString = await response.Content.ReadAsStringAsync(cancellationToken);

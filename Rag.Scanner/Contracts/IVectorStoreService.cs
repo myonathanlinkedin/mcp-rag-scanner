@@ -1,4 +1,4 @@
 ﻿public interface IVectorStoreService
 {
-    Task SaveDocumentAsync(DocumentVector documentVector);
+    Task SaveDocumentAsync(DocumentVector documentVector, int vectorSize);
 }
