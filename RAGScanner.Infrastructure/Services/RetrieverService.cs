@@ -165,7 +165,7 @@ public class RetrieverService : IRetrieverService
         {
             Metadata = new DocumentMetadata
             {
-                ContentHash = result.Id, // Using 'Id' as content hash
+                Content = result.Id, // Using 'Id' as content hash
                 Url = result.Payload?.Url,
                 SourceType = result.Payload?.SourceType,
                 Title = result.Payload?.Title,

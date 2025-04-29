@@ -50,7 +50,7 @@ public class ScanUrlCommand : IRequest<Result>
                         Url = scrapedDocument.Url,
                         SourceType = scrapedDocument.IsPdf ? "pdf" : "html",
                         Title = ExtractTitle(parsedContent),
-                        ContentHash = HashHelper.ComputeDeterministicGuid(parsedContent),
+                        Content = parsedContent,
                         ScrapedAt = scrapedDocument.ScrapedAt
                     }
                 };

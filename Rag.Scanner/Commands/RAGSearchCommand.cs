@@ -42,11 +42,11 @@ public class RAGSearchCommand : IRequest<Result<List<RAGSearchResult>>>
 
                 return new RAGSearchResult
                 {
-                    Content = doc.Metadata.Title, // Assuming content is part of the title (adjust as needed)
+                    Id = doc.Metadata.Id, // Assuming each document has a unique ID
+                    Content = doc.Metadata.Content, // Assuming content is part of the title (adjust as needed)
                     Url = doc.Metadata.Url,
                     Title = doc.Metadata.Title,
                     Score = score,
-                    Vector = documentEmbedding // Store the vector here
                 };
             }).ToList();
 

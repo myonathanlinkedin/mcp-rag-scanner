@@ -76,18 +76,26 @@ public class VectorStoreService : IVectorStoreService
     {
         await EnsureCollectionExistsAsync(vectorSize);
 
-        var existingVectors = await GetExistingVectorsAsync(documentVector.Embedding); // Use the vector to query
-
-        // Use similarity check to determine if the vector should be stored
-        foreach (var existingVector in existingVectors)
+        try
         {
-            var similarity = VectorUtility.ComputeCosineSimilarity(documentVector.Embedding, existingVector.Embedding);
 
-            if (similarity >= similarityThreshold)
+            var existingVectors = await GetExistingVectorsAsync(documentVector.Embedding); // Use the vector to query
+
+            // Use similarity check to determine if the vector should be stored
+            foreach (var existingVector in existingVectors)
             {
-                logger.LogInformation("Vector is too similar to an existing one (Similarity: {Similarity}). Skipping save.", similarity);
-                return;  // Skip saving the vector if it's too similar
+                var similarity = VectorUtility.ComputeCosineSimilarity(documentVector.Embedding, existingVector.Embedding);
+
+                if (similarity >= similarityThreshold)
+                {
+                    logger.LogInformation("Vector is too similar to an existing one (Similarity: {Similarity}). Skipping save.", similarity);
+                    return;  // Skip saving the vector if it's too similar
+                }
             }
+        }
+        catch (Exception ex)
+        {
+           // exception will rise if no document in the DB, continue insert
         }
 
         // Proceed to save the new vector as it's sufficiently distinct
@@ -97,13 +105,14 @@ public class VectorStoreService : IVectorStoreService
             {
                 new
                 {
-                    id = documentVector.Metadata.ContentHash,
+                    id = Guid.NewGuid().ToString(),
                     vector = documentVector.Embedding,
                     payload = new
                     {
                         url = documentVector.Metadata.Url,
                         sourceType = documentVector.Metadata.SourceType,
                         title = documentVector.Metadata.Title,
+                        content = documentVector.Metadata.Content,
                         scrapedAt = documentVector.Metadata.ScrapedAt
                     }
                 }
@@ -171,10 +180,11 @@ public class VectorStoreService : IVectorStoreService
                 {
                     Metadata = new DocumentMetadata
                     {
-                        ContentHash = result.Id,
+                        Id = Guid.Parse(result.Id),
                         Url = result.Payload?.Url,
                         SourceType = result.Payload?.SourceType,
                         Title = result.Payload?.Title,
+                        Content = result.Payload?.Content,
                         // Use TryParse for ScrapedAt
                         ScrapedAt = result.Payload?.ScrapedAt ?? default(DateTime) // Use null-coalescing operator to handle nullable DateTime
                     },
