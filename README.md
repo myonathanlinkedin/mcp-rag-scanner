@@ -61,9 +61,9 @@ User
    Embeddings + metadata are stored into **Qdrant Vector DB**.
 
 6. **User Query (RAG Flow)**  
-   - User asks a question.
-   - The system queries Qdrant to find the most relevant document chunks.
-   - Retrieved chunks are passed into the **LLM** as context.
+   - User asks a question.  
+   - The system queries Qdrant to find the most relevant document chunks.  
+   - Retrieved chunks are passed into the **LLM** as context.  
    - The LLM answers based on real retrieved information — not guesses.
 
 ---
@@ -71,7 +71,7 @@ User
 ## 🔮 Why This Matters
 
 - **Traditional LLMs** make up (hallucinate) information.  
-- **Our system** retrieves real documents and augments LLMs, ensuring **trustworthy**, **verifiable**, and **updatable** answers.
+- **Our system** retrieves real documents and augments LLMs, ensuring **trustworthy**, **verifiable**, and **updatable** answers.  
 - This architecture represents the **future of responsible AI**: **dynamic, modular, factual, and constantly learning**.
 
 ---
@@ -89,15 +89,33 @@ User
 
 ## 📈 Future Enhancements (Vision)
 
-- Support **multi-language documents** scraping and embedding.
-- Enable **real-time ingestion pipelines** (streaming URLs).
-- Plug-in different LLM providers via MCP.
-- Auto-refresh documents on schedule to keep vectors always up-to-date.
+- Support **multi-language documents** scraping and embedding.  
+- Enable **real-time ingestion pipelines** (streaming URLs).  
+- Plug-in different LLM providers via MCP.  
+- Auto-refresh documents on schedule to keep vectors always up-to-date.  
 - Build a **user-friendly dashboard** to manage knowledge base easily.
 
 ---
 
-# 🌟 Conclusion
+## 📝 License & Usage
 
-This system is a **cornerstone for building AI systems that are grounded in facts**, not fiction.  
-It enables **real-time knowledge updates**, **trustworthy RAG**, and **scalable future integration** with advancing LLM technologies.
+This project is licensed under the **Apache License 2.0**.
+
+You're free to:  
+✅ Use it commercially or personally  
+✅ Modify, fork, and redistribute it  
+✅ Build your own projects with it  
+
+As long as you:  
+- Include a copy of the **Apache 2.0 License**  
+- **Give attribution** to this project  
+- **Disclose changes** if you modify it  
+- Don’t use the authors’ names or brand for promotion without permission
+
+### How to Use:
+1. Fork or clone this repo  
+2. Build your solution based on the architecture  
+3. Keep the `LICENSE` file intact  
+4. Add attribution like:
+
+> “Built with components from the [Intelligent Fact-Grounded RAG System](https://github.com/your-repo-url) (Apache 2.0)”  
