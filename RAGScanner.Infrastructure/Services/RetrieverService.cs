@@ -7,6 +7,7 @@ public class RetrieverService : IRetrieverService
 {
     private readonly ILogger<RetrieverService> logger;
     private readonly HttpClient httpClient;
+    private readonly IEmbeddingService embeddingService;
     private readonly string baseEndpoint;
     private readonly int defaultTopK = 10;
     private readonly int maxTopK = 50;
@@ -15,19 +16,20 @@ public class RetrieverService : IRetrieverService
     public RetrieverService(
         ILogger<RetrieverService> logger,
         HttpClient httpClient,
+        IEmbeddingService embeddingService,
         ApplicationSettings applicationSettings)
     {
         this.logger = logger;
         this.httpClient = httpClient;
+        this.embeddingService = embeddingService;
         this.applicationSettings = applicationSettings;
-        this.baseEndpoint = applicationSettings.Qdrant.Endpoint;
     }
 
     public async Task<Result<List<DocumentVector>>> RetrieveAllDocumentsAsync(CancellationToken cancellationToken)
     {
         logger.LogInformation("Retrieving all documents from vector store (full fetch)");
 
-        var endpoint = $"{baseEndpoint}/collections/default_collection/points";
+        var endpoint = $"{applicationSettings.Qdrant.Endpoint}/collections/{applicationSettings.Qdrant.CollectionName}/points/query";
 
         int offset = 0;
         int limit = GetSmartLimit();
@@ -94,15 +96,14 @@ public class RetrieverService : IRetrieverService
     {
         logger.LogInformation("Retrieving documents matching query: {QueryText}", queryText);
 
-        var embeddingVector = await GenerateEmbeddingAsync(queryText, cancellationToken);
-
+        var embeddingVector = await embeddingService.GenerateEmbeddingAsync(queryText, cancellationToken);
         if (embeddingVector == null || embeddingVector.Length == 0)
         {
             logger.LogError("Failed to generate embedding for query text.");
             return Result<List<DocumentVector>>.Failure(new List<string> { "Embedding generation failed." });
         }
 
-        var endpoint = $"{baseEndpoint}/collections/default_collection/points/search";
+        var endpoint = $"{applicationSettings.Qdrant.Endpoint}/collections/{applicationSettings.Qdrant.CollectionName}/points/query";
 
         int topK = GetSmartTopK();
 
@@ -151,37 +152,6 @@ public class RetrieverService : IRetrieverService
         }
     }
 
-    private async Task<float[]> GenerateEmbeddingAsync(string content, CancellationToken cancellationToken)
-    {
-        var requestBody = new
-        {
-            model = applicationSettings.Api.EmbeddingModel,
-            input = content
-        };
-
-        var jsonRequest = JsonConvert.SerializeObject(requestBody);
-        var contentRequest = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-
-        var response = await httpClient.PostAsync($"{applicationSettings.Api.Endpoint}/embeddings", contentRequest, cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"Failed to generate embedding. Status Code: {response.StatusCode}. Response: {responseBody}");
-        }
-
-        var responseString = await response.Content.ReadAsStringAsync(cancellationToken);
-        var embeddingResponse = JsonConvert.DeserializeObject<EmbeddingResponse>(responseString)
-            ?? throw new Exception("Failed to deserialize embedding response.");
-
-        if (embeddingResponse.Data == null || embeddingResponse.Data.Count == 0)
-        {
-            throw new Exception("Embedding response contains no data.");
-        }
-
-        return embeddingResponse.Data[0].Embedding;
-    }
-
     private DocumentVector MapResultToDocumentVector(QdrantQueryResult result)
     {
         return new DocumentVector
@@ -194,7 +164,7 @@ public class RetrieverService : IRetrieverService
                 Title = result.Payload?.Title,
                 ScrapedAt = DateTime.TryParse(result.Payload?.ScrapedAt, out DateTime parsedDate)
                     ? parsedDate
-                    : default
+                    : default(DateTime)
             },
             Embedding = null
         };
