@@ -17,15 +17,15 @@ namespace MCP.Server.Tools
             "You must login in order to use this.";
 
         private const string RAGSearchDescription =
-           "Search using a Retrieval-Augmented Generation (RAG) method to enhance results. " +
-           "Each result will include: " +
-           "- Id: A unique identifier (GUID) for the document. " +
-           "- Content: The extracted text content from the document. " +
-           "- Url: The original URL where the document is located. " +
-           "- Title: The title of the document. " +
-           "- Score: A similarity score indicating how closely the document matches your search query. " +
-           "You must login in order to use this. " +
-           "If no relevant documents are found, you should say you don't know.";
+            "RAG Search, returns a JSON array of relevant results. " +
+            "Each item in the list includes: " +
+            "- Id: A unique identifier (GUID) for the document. " +
+            "- Content: The extracted text content from the document. " +
+            "- Url: The original URL of the document. " +
+            "- Title: The title of the document. " +
+            "- Score: A relevance score indicating how closely it matches the query. " +
+            "The LLM must search the document content that best matches the provided prompt. " +
+            "If no relevant content is found, respond by saying you don’t know.";
 
         public RAGTools(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
@@ -76,7 +76,7 @@ namespace MCP.Server.Tools
         // New RAGSearch functionality
         [McpServerTool, Description(RAGSearchDescription)]
         public async Task<List<RAGSearchResult>> RAGSearchAsync(
-          [Description("The search query to enhance using RAG method")] string query,
+          [Description("The search query")] string query,
           [Description("Bearer token for authentication")] string token)
         {
             try
