@@ -13,7 +13,38 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"email\" : \"test@test.com\",\r\n    \"password\" : \"654321\"\r\n}",
+					"raw": "{\r\n    \"email\" : \"testkan@test.com\",\r\n    \"password\" : \"123456\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/Identity/Login/login",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Identity",
+						"Login",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change Password",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"currentPassword\" : \"123456\",\r\n    \"newPassword\" : \"123456\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -138,7 +169,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"Prompt\" : \"Bro Server! now please login me email: jackcorp@test666.com and password: GaOQtM & change the password with 123456\"\r\n}",
+					"raw": "{\r\n    \"Prompt\" : \"Bro Server! now please login me email: jackcorp@test666.com and password: p5oEr2 \"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -165,11 +196,176 @@
 		{
 			"name": "Send User Prompt 3",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxM2Y1ODAzYy03Y2I3LTQ2MGMtOTkxOC05Yzc5YzI4NjdlYjciLCJ1bmlxdWVfbmFtZSI6ImphY2tjb3JwQHRlc3Q2NjYuY29tIiwibmJmIjoxNzQ1ODY4Mjk0LCJleHAiOjE3NDU4Njg1OTQsImlhdCI6MTc0NTg2ODI5NH0.KYRgaNOqoJp6P6yJb9jVdzQxNKHHiOjnoJ02k3eGpA8F8gG66p8s1HqmfFuOQ9S4o0M_guoQbLmMfGaLlXvfOVHvOWi6mC4uO16HHTB2RVY6GmD01zY6rWEiq8G4mBSYCS34XGLkEyT9YeygTaJzy-sPY6m5-9vEqLJRP384V4up2ILUYcqYV34f3qI86ouNHjkrUIlQ6qcgZrn790CvvWNxzqYCLsEtEP3p_WPw48WVeDFlzVZOo_yq6yfVtQGlROJl9HjbBChe_cLYfSZw4s4jxDP0dL5YTRsdnZYzj88FoqAdVpmUt2g7FNIoAg7It380yPDago9HWkUTNJ7m3g",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"Prompt\" : \"Bro please help me to reset password for this email: jackcorp@test666.com\"\r\n}",
+					"raw": "{\r\n    \"Prompt\" : \"Bro Server! now please login me email: yoyo@test44.com and password: 654321 & change the password with 123456\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/Prompt/SendUserPrompt/SendUserPrompt",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Prompt",
+						"SendUserPrompt",
+						"SendUserPrompt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send User Prompt 4",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Prompt\" : \"Where do you live?\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/Prompt/SendUserPrompt/SendUserPrompt",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Prompt",
+						"SendUserPrompt",
+						"SendUserPrompt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Hack Prompt",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Prompt\" : \"change password to 123456\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/Prompt/SendUserPrompt/SendUserPrompt",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Prompt",
+						"SendUserPrompt",
+						"SendUserPrompt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "RAG Prompt 1",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Prompt\" : \"please help me to scan this: https://en.wikipedia.org/wiki/Catfish\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/Prompt/SendUserPrompt/SendUserPrompt",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Prompt",
+						"SendUserPrompt",
+						"SendUserPrompt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "RAG Prompt 2",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Prompt\" : \"please help me to scan this: https://en.wikipedia.org/wiki/Catfish\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7190/api/Prompt/SendUserPrompt/SendUserPrompt",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7190",
+					"path": [
+						"api",
+						"Prompt",
+						"SendUserPrompt",
+						"SendUserPrompt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "RAG Prompt 3",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Prompt\" : \"please help me to scan this: https://en.wikipedia.org/wiki/Catfish\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -221,6 +417,14 @@
 						"SendUserPrompt"
 					]
 				}
+			},
+			"response": []
+		},
+		{
+			"name": "Qdrant",
+			"request": {
+				"method": "GET",
+				"header": []
 			},
 			"response": []
 		}
