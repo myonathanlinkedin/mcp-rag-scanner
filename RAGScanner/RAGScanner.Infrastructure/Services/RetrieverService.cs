@@ -165,9 +165,10 @@ public class RetrieverService : IRetrieverService
         {
             Metadata = new DocumentMetadata
             {
-                Content = result.Id, // Using 'Id' as content hash
+                Id = new Guid(result.Id),
                 Url = result.Payload?.Url,
                 SourceType = result.Payload?.SourceType,
+                Content = result.Payload?.Content,
                 Title = result.Payload?.Title,
                 ScrapedAt = result.Payload?.ScrapedAt ?? default(DateTime) // Use null-coalescing operator to handle nullable DateTime
             },

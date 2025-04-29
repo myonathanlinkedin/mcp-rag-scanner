@@ -13,12 +13,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Identity\Identity.Application\Identity.Application.csproj" />
       <ProjectReference Include="..\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj" />
       <ProjectReference Include="..\Identity\Identity.Web\Identity.Web.csproj" />
       <ProjectReference Include="..\MCPClient\MCP.Client.csproj" />
-      <ProjectReference Include="..\Rag.Scanner\RAGScanner.Application.csproj" />
-      <ProjectReference Include="..\RAGScanner.Infrastructure\RAGScanner.Infrastructure.csproj" />
-      <ProjectReference Include="..\RAGScanner.Web\RAGScanner.Web.csproj" />
+      <ProjectReference Include="..\RAGScanner\RAGScanner.Application\RAGScanner.Application.csproj" />
+      <ProjectReference Include="..\RAGScanner\RAGScanner.Infrastructure\RAGScanner.Infrastructure.csproj" />
+      <ProjectReference Include="..\RAGScanner\RAGScanner.Model\RAGScanner.Model.csproj" />
+      <ProjectReference Include="..\RAGScanner\RAGScanner.Web\RAGScanner.Web.csproj" />
     </ItemGroup>
 
     <ItemGroup>

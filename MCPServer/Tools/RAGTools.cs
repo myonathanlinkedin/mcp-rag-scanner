@@ -17,8 +17,15 @@ namespace MCP.Server.Tools
             "You must login in order to use this.";
 
         private const string RAGSearchDescription =
-            "Search using a Retrieval-Augmented Generation (RAG) method to enhance results. " +
-            "You must login in order to use this.";
+           "Search using a Retrieval-Augmented Generation (RAG) method to enhance results. " +
+           "Each result will include: " +
+           "- Id: A unique identifier (GUID) for the document. " +
+           "- Content: The extracted text content from the document. " +
+           "- Url: The original URL where the document is located. " +
+           "- Title: The title of the document. " +
+           "- Score: A similarity score indicating how closely the document matches your search query. " +
+           "You must login in order to use this. " +
+           "If no relevant documents are found, you should say you don't know.";
 
         public RAGTools(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {

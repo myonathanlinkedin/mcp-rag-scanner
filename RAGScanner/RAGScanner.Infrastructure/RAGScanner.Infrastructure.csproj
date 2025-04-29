@@ -14,7 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Rag.Scanner\RAGScanner.Application.csproj" />
+    <ProjectReference Include="..\..\Common\Common.Application\Common.Application.csproj" />
+    <ProjectReference Include="..\RAGScanner.Application\RAGScanner.Application.csproj" />
     <ProjectReference Include="..\RAGScanner.Model\RAGScanner.Model.csproj" />
   </ItemGroup>
 
