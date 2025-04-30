@@ -13,14 +13,14 @@ public class VectorStoreService : IVectorStoreService
 
     public VectorStoreService(
         ILogger<VectorStoreService> logger,
-        IOptions<ApplicationSettings> appSettings,
+        ApplicationSettings appSettings,
         HttpClient httpClient)
     {
         this.logger = logger;
-        qdrantSettings = appSettings.Value.Qdrant;
+        qdrantSettings = appSettings.Qdrant;
         this.httpClient = httpClient;
         baseEndpoint = qdrantSettings.Endpoint.TrimEnd('/');
-        similarityThreshold = appSettings.Value.Qdrant.SimilarityThreshold; // Load dynamic threshold
+        similarityThreshold = appSettings.Qdrant.SimilarityThreshold; // Load dynamic threshold
     }
 
     private async Task EnsureCollectionExistsAsync(int vectorSize)

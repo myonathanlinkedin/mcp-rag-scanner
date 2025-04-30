@@ -8,10 +8,9 @@ public class EmailSenderService : IEmailSender
 {
     private readonly ApplicationSettings applicationSettings;
 
-    public EmailSenderService(IConfiguration configuration)
+    public EmailSenderService(IConfiguration configuration, ApplicationSettings applicationSettings)
     {
-        // Bind the ApplicationSettings to the class
-        applicationSettings = configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>();
+        this.applicationSettings = applicationSettings;
     }
 
     public async Task SendEmailAsync(string toEmail, string subject, string body)

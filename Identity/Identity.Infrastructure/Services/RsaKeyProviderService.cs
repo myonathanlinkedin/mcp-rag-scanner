@@ -12,9 +12,9 @@ public class RsaKeyProviderService : IRsaKeyProvider
     private readonly byte[] encryptionKey;
     private readonly byte[] encryptionIV;
 
-    public RsaKeyProviderService(IOptions<ApplicationSettings> appSettings)
+    public RsaKeyProviderService(ApplicationSettings appSettings)
     {
-        var rotationInterval = TimeSpan.FromSeconds(appSettings.Value.KeyRotationIntervalSeconds);
+        var rotationInterval = TimeSpan.FromSeconds(appSettings.KeyRotationIntervalSeconds);
 
         // Secure AES encryption key and IV (would be ideally stored securely, e.g., using KMS)
         encryptionKey = new byte[32];  // 256 bits for AES

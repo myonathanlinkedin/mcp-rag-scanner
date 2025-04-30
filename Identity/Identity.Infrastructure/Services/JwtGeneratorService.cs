@@ -16,14 +16,14 @@ public class JwtGeneratorService : IJwtGenerator
 
     public JwtGeneratorService(
         UserManager<User> userManager,
-        IOptions<ApplicationSettings> appSettings,
+        ApplicationSettings appSettings,
         IRsaKeyProvider keyProvider)
     {
         this.userManager = userManager;
         this.keyProvider = keyProvider;
-        this.audience = appSettings.Value.Audience;
-        this.issuer = appSettings.Value.Issuer;
-        this.tokenExpirationSeconds = appSettings.Value.TokenExpirationSeconds;
+        this.audience = appSettings.Audience;
+        this.issuer = appSettings.Issuer;
+        this.tokenExpirationSeconds = appSettings.TokenExpirationSeconds;
     }
 
     public async Task<string> GenerateToken(User user)
