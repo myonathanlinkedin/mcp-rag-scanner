@@ -40,30 +40,34 @@ public class RAGSearchCommand : IRequest<Result<List<RAGSearchResult>>>
                 var queryEmbedding = await embeddingService.GenerateEmbeddingAsync(request.Query, cancellationToken);
                 logger.LogInformation("Generated embedding for the query");
 
-                // 3 & 4. Compute similarity, map to RAGSearchResult, sort, and take top K
+                // 3. Compute similarity, map to RAGSearchResult, sort, and take top K
                 var topResults = searchResults.Data
                     .Select(doc =>
                     {
                         try
                         {
+                            // Compute cosine similarity between the query's embedding and document's embedding
+                            var similarityScore = VectorUtility.ComputeCosineSimilarity(queryEmbedding, doc.Embedding);
+
+                            // Map to RAGSearchResult
                             return new RAGSearchResult
                             {
                                 Id = doc.Metadata.Id,
                                 Content = doc.Metadata.Content,
                                 Url = doc.Metadata.Url,
                                 Title = doc.Metadata.Title,
-                                Score = VectorUtility.ComputeCosineSimilarity(queryEmbedding, doc.Embedding),
-                            }; // Project to RAGSearchResult
+                                Score = similarityScore,  // Store the similarity score here
+                            };
                         }
                         catch (Exception ex)
                         {
                             logger.LogError(ex, "Error mapping document to RAGSearchResult");
-                            return null; // Handle error, e.g., return null or a default value
+                            return null; // Handle error, e.g., return null if there's an issue with a document
                         }
                     })
                     .Where(result => result != null) // Filter out any null results due to mapping errors
-                    .OrderByDescending(result => result.Score) // Sort by score
-                    .Take(request.TopK) // Take top K
+                    .OrderByDescending(result => result.Score) // Sort by similarity score (cosine similarity)
+                    .Take(request.TopK) // Take top K results
                     .ToList(); // Execute and materialize the result
 
                 logger.LogInformation("Returning top {TopK} results", request.TopK);
@@ -76,5 +80,4 @@ public class RAGSearchCommand : IRequest<Result<List<RAGSearchResult>>>
             }
         }
     }
-
 }
