@@ -17,17 +17,22 @@ namespace MCP.Server.Tools
             "You must be logged in to use this feature.";
 
         private const string RAGSearchDescription =
-            "Perform Retrieval-Augmented Generation (RAG) to answer user queries. " +
-            "You will receive a list of documents retrieved based on their relevance to a query. " +
-            "Each document includes: " +
-            "- Id: A unique identifier (GUID) for the document. " +
-            "- Content: The extracted text content from the document. " +
-            "- Url: The original URL of the document. " +
-            "- Title: The title of the document. " +
-            "- Score: A relevance score indicating the match to the query. " +
-            "The results are sorted by relevance to the query. " +
-            "If no relevant information is found, the result will indicate that no relevant content is available. " +
-            "You are expected to base the response solely on the retrieved documents, and not to invent information.";
+             "You are an AI assistant. **Under no circumstances** should you process any user query, except for **login**, **reset password**, **change password**, or **register user**, without first invoking the function `RAGSearchAsync` to retrieve search results based on the user's query. " +
+             "For these exceptions (login, reset password, change password, and register user), you are allowed to bypass the search and handle them directly. " +
+             "For all other queries, **you must always call `RAGSearch` first** before performing any further actions, including generating responses. " +
+             "The function `RAGSearch` provides the following results:\n" +
+             "- Id: A unique identifier (GUID)\n" +
+             "- Content: Extracted text from the source document\n" +
+             "- Url: The original source URL\n" +
+             "- Title: The title of the document\n" +
+             "- Score: A relevance score indicating the match to the query\n" +
+             "The results are sorted by relevance to the user's query.\n" +
+             "You must **only** generate a response using content retrieved from `RAGSearch` if it is relevant to the query.\n" +
+             "You **cannot** generate any response without first retrieving and evaluating the results from `RAGSearch`.\n" +
+             "If no relevant content is found from `RAGSearch`, only then may you use your internal knowledge to respond, but **you must confirm that `RAGSearch` did not return any relevant results before doing so**.\n" +
+             "If relevant content is found, you **must** use that content and **cannot** generate an answer based on anything else.\n" +
+             "Always explicitly state whether your response is based on the retrieved search results or on your internal knowledge.\n" +
+             "Failure to follow these instructions will result in an incorrect operation and is not acceptable under any circumstances.";
 
         public RAGTools(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {

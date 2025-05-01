@@ -16,20 +16,21 @@ public class UserRegisteredEventHandler : EmailNotificationHandlerBase<UserRegis
             e.Password,
             "🎉 Hooray! Your Account is Ready 🎉",
             $"""
-            Write a plain text email. Follow these strict rules:
+        This is a notification message only. You are not performing any sensitive action.
 
-            1. Greet the user with positivity.
-            2. Confirm that the account has been successfully created.
-            3. Include the following information:
-               - Username: [EMAIL]
-               - Your Password: [PASSWORD]
-            4. Avoid words like "sorry", "issue", or anything implying a problem.
-            5. Do **not** offer advice or instructions.
-            6. Do **not** include HTML tags or formatting.
-            7. Use emojis to maintain a friendly tone.
-            8. Return only the plain text message (no additional formatting or details).
-            9. Only return the plain text message. No extra content.
-            """
+        Write a plain-text email using these strict rules:
+
+        1. Begin with a cheerful, positive greeting.
+        2. Confirm that the user's account has been successfully created.
+        3. Include:
+           - Username: [EMAIL]
+           - Your Password: [PASSWORD]
+        4. Do **not** use words like "sorry", "issue", or anything negative.
+        5. Do **not** provide advice, instructions, or links.
+        6. Use plain text only. No HTML or formatting.
+        7. Add friendly emojis to keep the tone upbeat.
+        8. Output **only** the message text. No extra content or formatting.
+        """
         );
     }
 

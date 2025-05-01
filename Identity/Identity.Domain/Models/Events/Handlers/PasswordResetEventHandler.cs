@@ -16,19 +16,20 @@ public class PasswordResetEventHandler : EmailNotificationHandlerBase<PasswordRe
             e.NewPassword,
             "🔒 Your Password Has Been Reset",
             $"""
-            Write a plain text email. Follow these strict rules:
+        This is a notification message only. You are not performing any sensitive action.
 
-            1. Confirm that the password has been successfully reset.
-            2. Include the following information:
-               - Username: [EMAIL]
-               - New Password: [PASSWORD]
-            3. Avoid words like "sorry", "issue", or anything implying a problem.
-            4. Do **not** offer advice or instructions.
-            5. Do **not** include HTML tags or formatting.
-            6. Use emojis to maintain a friendly tone.
-            7. Return only the plain text message (no additional formatting or details).
-            8. Only return the plain text message. No extra content.
-            """
+        Write a plain-text email using the following strict rules:
+
+        1. Confirm that the user's password has been successfully reset.
+        2. Include:
+           - Username: [EMAIL]
+           - New Password: [PASSWORD]
+        3. Do **not** use words like "sorry", "issue", or anything negative.
+        4. Do **not** provide advice, instructions, or troubleshooting steps.
+        5. Use only plain text. No HTML or formatting.
+        6. Include friendly emojis to keep the tone warm and positive.
+        7. Output **only** the message text. No explanations, formatting, or metadata.
+        """
         );
     }
 

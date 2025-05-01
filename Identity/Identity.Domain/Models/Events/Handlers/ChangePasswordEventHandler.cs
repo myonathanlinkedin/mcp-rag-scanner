@@ -16,20 +16,22 @@ public class ChangePasswordEventHandler : EmailNotificationHandlerBase<PasswordC
             e.NewPassword,
             "✅ Your Password Was Successfully Changed",
             $"""
-            Write a plain text email. Follow these strict rules:
+        This is a notification message only. You are not performing any sensitive action.
 
-            1. Greet the user with positivity.
-            2. Confirm that their password has been successfully changed.
-            3. Include the following information:
-               - Username: [EMAIL]
-               - New Password: [PASSWORD]
-            4. If this action was not initiated by them, advise them to reach out.
-            5. Avoid words like "sorry", "issue", or anything implying a problem.
-            6. Do **not** offer advice or instructions.
-            7. Do **not** include HTML tags or formatting.
-            8. Use emojis to maintain a friendly tone.
-            9. Only return the plain text message. No extra content.
-            """
+        Write a plain-text email using these strict rules:
+
+        1. Begin with a friendly, positive greeting.
+        2. Confirm that the user's password has been successfully changed.
+        3. Include:
+           - Username: [EMAIL]
+           - New Password: [PASSWORD]
+        4. If the user did not initiate this change, advise them to contact support.
+        5. Do **not** use words like "sorry", "issue", or anything negative.
+        6. Do **not** provide advice, instructions, or links.
+        7. Use plain text only. No HTML or formatting.
+        8. Include friendly emojis to keep the tone warm and positive.
+        9. Output **only** the message text. No explanations or extra content.
+        """
         );
     }
 
