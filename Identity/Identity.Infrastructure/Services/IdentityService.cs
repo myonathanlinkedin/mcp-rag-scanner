@@ -1,45 +1,44 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
-internal class IdentityService : IIdentity
+public class IdentityService : IIdentity
 {
     private const string InvalidErrorMessage = "Invalid credentials.";
-
     private readonly UserManager<User> userManager;
     private readonly IJwtGenerator jwtGenerator;
-    private readonly IEmailSender emailSenderService;
+    private readonly IEventDispatcher eventDispatcher;
+    private readonly ILogger<IdentityService> logger;
 
     public IdentityService(
         UserManager<User> userManager,
         IJwtGenerator jwtGenerator,
-        IEmailSender emailSender)
+        IEventDispatcher eventDispatcher,
+        ILogger<IdentityService> logger)
     {
         this.userManager = userManager;
         this.jwtGenerator = jwtGenerator;
-        this.emailSenderService = emailSender;
+        this.eventDispatcher = eventDispatcher;
+        this.logger = logger;
     }
 
     public async Task<Result<IUser>> Register(UserRequestModel userRequest)
     {
         var user = new User(userRequest.Email);
-
         var identityResult = await userManager.CreateAsync(user, userRequest.Password);
-
         var errors = identityResult.Errors.Select(e => e.Description);
 
         if (identityResult.Succeeded)
         {
-            var subject = "🎉 Hooray! Your Account is Ready 🎉";
-            var body = $"Congrats! 🎉 Your account has been created successfully. Now, the fun begins! 😎\n\n" +
-                       $"Please log in using your email: '{userRequest.Email}' and password: '{userRequest.Password}'.\n\n" +
-                       "Don’t forget to change your password once you're in... We won't judge! 😜";
+            logger.LogInformation("User registered successfully with email: {Email}", userRequest.Email);
 
-            await emailSenderService.SendEmailAsync(userRequest.Email, subject, body);
-
+            // Dispatch UserRegisteredEvent (if necessary)
+            await eventDispatcher.Dispatch(new UserRegisteredEvent(userRequest.Email, userRequest.Password));
             return Result<IUser>.SuccessWith(user);
         }
 
+        // Log registration failure
+        logger.LogWarning("User registration failed for email: {Email}. Errors: {Errors}", userRequest.Email, string.Join(", ", errors));
         return Result<IUser>.Failure(errors);
     }
 
@@ -48,79 +47,96 @@ internal class IdentityService : IIdentity
         var user = await userManager.FindByEmailAsync(userRequest.Email);
         if (user == null)
         {
-            return InvalidErrorMessage;
+            logger.LogWarning("Login failed. User not found for email: {Email}", userRequest.Email);
+            return Result<UserResponseModel>.Failure(new[] { InvalidErrorMessage });
         }
 
         var passwordValid = await userManager.CheckPasswordAsync(user, userRequest.Password);
-
         if (!passwordValid)
         {
-            return InvalidErrorMessage;
+            logger.LogWarning("Login failed. Invalid password for email: {Email}", userRequest.Email);
+            return Result<UserResponseModel>.Failure(new[] { InvalidErrorMessage });
         }
 
         var token = await jwtGenerator.GenerateToken(user);
-
-        return new UserResponseModel(token);
+        logger.LogInformation("User logged in successfully with email: {Email}", userRequest.Email);
+        return Result<UserResponseModel>.SuccessWith(new UserResponseModel(token));
     }
 
     public async Task<Result> ChangePassword(ChangePasswordRequestModel changePasswordRequest)
     {
-        var user = await userManager.FindByIdAsync(changePasswordRequest.UserId);
-
-        if (user == null)
+        try
         {
-            return InvalidErrorMessage;
+            var user = await userManager.FindByIdAsync(changePasswordRequest.UserId);
+            if (user == null)
+            {
+                logger.LogWarning("Change password failed. User not found for UserId: {UserId}", changePasswordRequest.UserId);
+                return Result.Failure(new[] { InvalidErrorMessage });
+            }
+
+            var identityResult = await userManager.ChangePasswordAsync(
+                user,
+                changePasswordRequest.CurrentPassword,
+                changePasswordRequest.NewPassword);
+
+            var errors = identityResult.Errors.Select(e => e.Description);
+
+            if (identityResult.Succeeded)
+            {
+                logger.LogInformation("Password changed successfully for email: {Email}", user.Email);
+
+                await eventDispatcher.Dispatch(new PasswordChangedEvent(user.Email, changePasswordRequest.NewPassword));
+                return Result.Success;
+            }
+
+            logger.LogWarning("Password change failed for email: {Email}. Errors: {Errors}", user.Email, string.Join(", ", errors));
+            return Result.Failure(errors);
         }
-
-        var identityResult = await userManager.ChangePasswordAsync(
-            user,
-            changePasswordRequest.CurrentPassword,
-            changePasswordRequest.NewPassword);
-
-        var errors = identityResult.Errors.Select(e => e.Description);
-
-        return identityResult.Succeeded
-            ? Result.Success
-            : Result.Failure(errors);
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while changing the password for UserId: {UserId}", changePasswordRequest.UserId);
+            return Result.Failure(new[] { "An unexpected error occurred. Please try again later." });
+        }
     }
+
 
     public async Task<Result> ResetPassword(string email)
     {
-        var user = await userManager.FindByEmailAsync(email);
-
-        if (user == null)
+        try
         {
-            return InvalidErrorMessage;
+            var user = await userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                logger.LogWarning("Password reset failed. User not found for email: {Email}", email);
+                return Result.Failure(new[] { InvalidErrorMessage });
+            }
+
+            var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+            var newPassword = PasswordGenerator.Generate(6);
+            var identityResult = await userManager.ResetPasswordAsync(user, resetToken, newPassword);
+            var errors = identityResult.Errors.Select(e => e.Description);
+
+            if (identityResult.Succeeded)
+            {
+                logger.LogInformation("Password reset successfully for email: {Email}", email);
+
+                // Dispatch PasswordResetEvent (if necessary)
+                await eventDispatcher.Dispatch(new PasswordResetEvent(user.Email, newPassword));
+                return Result.Success;
+            }
+
+            logger.LogWarning("Password reset failed for email: {Email}. Errors: {Errors}", email, string.Join(", ", errors));
+            return Result.Failure(errors);
         }
-
-        var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-
-        var newPassword = PasswordGenerator.Generate(6); // <== Using PasswordGenerator class
-
-        var identityResult = await userManager.ResetPasswordAsync(
-            user,
-            resetToken,
-            newPassword);
-
-        var errors = identityResult.Errors.Select(e => e.Description);
-
-        if (identityResult.Succeeded)
+        catch (Exception ex)
         {
-            var subject = "🔒 Your Password Has Been Reset";
-            var body = $"Hello,\n\nYour password has been reset successfully. Here is your new password:\n\n" +
-                       $"Password: {newPassword}\n\n" +
-                       "Please log in and change it after logging in for better security.\n\nStay safe!";
-
-            await emailSenderService.SendEmailAsync(user.Email, subject, body);
-
-            return Result.Success;
+            logger.LogError(ex, "An error occurred while resetting the password for email: {Email}", email);
+            return Result.Failure(new[] { "An unexpected error occurred. Please try again later." });
         }
-
-        return Result.Failure(errors);
     }
 
     public Result<JsonWebKey> GetPublicKey()
     {
-        return Result<JsonWebKey>.SuccessWith(this.jwtGenerator.GetPublicKey());
+        return Result<JsonWebKey>.SuccessWith(jwtGenerator.GetPublicKey());
     }
 }

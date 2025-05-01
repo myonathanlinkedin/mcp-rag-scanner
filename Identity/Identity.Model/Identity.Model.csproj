@@ -17,4 +17,9 @@
     <Folder Include="Models\Requests\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\Common.Application\Common.Application.csproj" />
+    <ProjectReference Include="..\..\MCPClient\MCP.Client.csproj" />
+  </ItemGroup>
+
 </Project>

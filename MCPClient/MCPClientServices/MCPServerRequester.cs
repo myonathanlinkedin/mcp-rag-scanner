@@ -51,15 +51,20 @@ public class MCPServerRequester : IMCPServerRequester
         }
     }
 
-    public async Task<Result<string>> RequestAsync(string prompt)
+    public async Task<Result<string>> RequestAsync(string prompt, ChatRole? chatRole = null, bool useSession = true)
     {
         try
         {
+            List<ChatMessage> messages = null;
+
             // Retrieve messages from the message store
-            var messages = messageStore.GetMessages(sessionId);
+            if (useSession)
+                messages = messageStore.GetMessages(sessionId);
+            else
+                messages = new List<ChatMessage>();
 
             // Add the new user message
-            messages.Add(new ChatMessage(ChatRole.User, prompt));
+            messages.Add(new ChatMessage(chatRole ?? ChatRole.User, prompt));
 
             List<ChatResponseUpdate> updates = new List<ChatResponseUpdate>();
 
