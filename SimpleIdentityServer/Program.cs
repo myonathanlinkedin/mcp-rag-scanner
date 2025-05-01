@@ -9,9 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services
    .AddSingleton(builder.Configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>())
    .AddCommonApplication(builder.Configuration, Assembly.GetExecutingAssembly())
-   .AddIdentityApplication(builder.Configuration)
+   .AddIdentityApplicationConfiguration(builder.Configuration)
    .AddIdentityInfrastructure(builder.Configuration)
    .AddIdentityWebComponents()
+   .AddIdentityModelConfiguration(builder.Configuration)
    .AddTokenAuthentication(builder.Configuration)
    .AddRAGScannerApplication(builder.Configuration)
    .AddRAGScannerInfrastructure(builder.Configuration)
