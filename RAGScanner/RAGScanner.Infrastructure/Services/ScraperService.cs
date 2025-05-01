@@ -1,4 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Net.Http;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.IO;
+using System.Linq;
 
 public class ScraperService : IScraperService
 {
@@ -15,7 +20,6 @@ public class ScraperService : IScraperService
     {
         var client = httpClientFactory.CreateClient();
 
-        // Use LINQ to process URLs and handle potential errors
         var tasks = urls.Select(async url =>
         {
             try
@@ -23,13 +27,34 @@ public class ScraperService : IScraperService
                 var response = await HttpHelper.GetAsync(client, url);
                 var contentType = response.Content.Headers.ContentType?.MediaType;
                 var isPdf = ContentTypeDetector.IsPdf(contentType);
-                var bytes = await response.Content.ReadAsByteArrayAsync();
-                var contentText = !isPdf ? await response.Content.ReadAsStringAsync() : null;
+
+                byte[] contentBytes;
+                string contentText = null;
+
+                if (isPdf)
+                {
+                    await using var stream = await response.Content.ReadAsStreamAsync();
+                    using var ms = new MemoryStream();
+                    var buffer = new byte[81920]; // 80 KB buffer for better performance
+
+                    int bytesRead;
+                    while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length))) > 0)
+                    {
+                        await ms.WriteAsync(buffer.AsMemory(0, bytesRead));
+                    }
+
+                    contentBytes = ms.ToArray();
+                }
+                else
+                {
+                    contentBytes = await response.Content.ReadAsByteArrayAsync();
+                    contentText = await response.Content.ReadAsStringAsync();
+                }
 
                 return new ScrapedDocument
                 {
                     Url = url,
-                    ContentBytes = bytes,
+                    ContentBytes = contentBytes,
                     ContentText = contentText,
                     IsPdf = isPdf,
                     ScrapedAt = DateTime.UtcNow
@@ -37,14 +62,12 @@ public class ScraperService : IScraperService
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error scraping {Url}", url);
-                // Return null for failed scrapes, filter them out later
+                logger.LogError(ex, "Failed to scrape URL: {Url}", url);
                 return null;
             }
         });
 
-        // Await all tasks and filter out null results (failed scrapes)
         var results = await Task.WhenAll(tasks);
-        return results.Where(doc => doc != null).ToList();
+        return results.Where(r => r != null).ToList();
     }
 }
