@@ -13,41 +13,38 @@ public class ScraperService : IScraperService
 
     public async Task<List<ScrapedDocument>> ScrapeUrlsAsync(List<string> urls)
     {
-        var documents = new List<ScrapedDocument>();
         var client = httpClientFactory.CreateClient();
 
-        foreach (var url in urls)
+        // Use LINQ to process URLs and handle potential errors
+        var tasks = urls.Select(async url =>
         {
             try
             {
                 var response = await HttpHelper.GetAsync(client, url);
                 var contentType = response.Content.Headers.ContentType?.MediaType;
                 var isPdf = ContentTypeDetector.IsPdf(contentType);
-
                 var bytes = await response.Content.ReadAsByteArrayAsync();
-                string contentText = null;
+                var contentText = !isPdf ? await response.Content.ReadAsStringAsync() : null;
 
-                if (!isPdf)
-                {
-                    // If it's not PDF, read as string
-                    contentText = await response.Content.ReadAsStringAsync();
-                }
-
-                documents.Add(new ScrapedDocument
+                return new ScrapedDocument
                 {
                     Url = url,
                     ContentBytes = bytes,
                     ContentText = contentText,
                     IsPdf = isPdf,
                     ScrapedAt = DateTime.UtcNow
-                });
+                };
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error scraping {Url}", url);
+                // Return null for failed scrapes, filter them out later
+                return null;
             }
-        }
+        });
 
-        return documents;
+        // Await all tasks and filter out null results (failed scrapes)
+        var results = await Task.WhenAll(tasks);
+        return results.Where(doc => doc != null).ToList();
     }
 }

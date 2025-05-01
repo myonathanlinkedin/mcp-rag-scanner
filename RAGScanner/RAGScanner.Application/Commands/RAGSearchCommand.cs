@@ -1,9 +1,5 @@
 ﻿using MediatR;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using static RAGSearchCommand;
+using Microsoft.Extensions.Logging;
 
 public class RAGSearchCommand : IRequest<Result<List<RAGSearchResult>>>
 {
@@ -14,46 +10,71 @@ public class RAGSearchCommand : IRequest<Result<List<RAGSearchResult>>>
     {
         private readonly IRetrieverService retrieverService;
         private readonly IEmbeddingService embeddingService;
+        private readonly ILogger<RAGSearchCommandHandler> logger;
 
-        public RAGSearchCommandHandler(IRetrieverService retrieverService, IEmbeddingService embeddingService)
+        public RAGSearchCommandHandler(IRetrieverService retrieverService, IEmbeddingService embeddingService, ILogger<RAGSearchCommandHandler> logger)
         {
             this.retrieverService = retrieverService;
             this.embeddingService = embeddingService;
+            this.logger = logger;
         }
 
         public async Task<Result<List<RAGSearchResult>>> Handle(RAGSearchCommand request, CancellationToken cancellationToken)
         {
-            // 1. Retrieve relevant documents based on the query
-            var searchResults = await retrieverService.RetrieveDocumentsByQueryAsync(request.Query, cancellationToken);
+            logger.LogInformation("Handling RAGSearchCommand for query: {Query}, TopK: {TopK}", request.Query, request.TopK);
 
-            if (!searchResults.Succeeded)
+            try
             {
-                return Result<List<RAGSearchResult>>.Failure(new List<string> { "Failed to retrieve documents for query." });
-            }
+                // 1. Retrieve relevant documents based on the query
+                var searchResults = await retrieverService.RetrieveDocumentsByQueryAsync(request.Query, cancellationToken);
 
-            // 2. Get the embedding for the query
-            var queryEmbedding = await embeddingService.GenerateEmbeddingAsync(request.Query, cancellationToken);
-
-            // 3. Compute the similarity score for each document based on the query embedding
-            var ragSearchResults = searchResults.Data.Select(doc =>
-            {
-                var documentEmbedding = doc.Embedding; // Assuming document embeddings are available in the doc
-                var score = VectorUtility.ComputeCosineSimilarity(queryEmbedding, documentEmbedding); // Cosine similarity between query and document embedding
-
-                return new RAGSearchResult
+                if (!searchResults.Succeeded)
                 {
-                    Id = doc.Metadata.Id, // Assuming each document has a unique ID
-                    Content = doc.Metadata.Content, // Assuming content is part of the title (adjust as needed)
-                    Url = doc.Metadata.Url,
-                    Title = doc.Metadata.Title,
-                    Score = score,
-                };
-            }).ToList();
+                    logger.LogError("Failed to retrieve documents: {Errors}", string.Join(", ", searchResults.Errors));
+                    return Result<List<RAGSearchResult>>.Failure(searchResults.Errors);
+                }
 
-            // 4. Sort the results by score in descending order and limit to TopK
-            var topResults = ragSearchResults.OrderByDescending(result => result.Score).Take(request.TopK).ToList();
+                logger.LogInformation("Successfully retrieved {Count} documents from retriever", searchResults.Data.Count);
 
-            return Result<List<RAGSearchResult>>.SuccessWith(topResults);
+                // 2. Get the embedding for the query
+                var queryEmbedding = await embeddingService.GenerateEmbeddingAsync(request.Query, cancellationToken);
+                logger.LogInformation("Generated embedding for the query");
+
+                // 3 & 4. Compute similarity, map to RAGSearchResult, sort, and take top K
+                var topResults = searchResults.Data
+                    .Select(doc =>
+                    {
+                        try
+                        {
+                            return new RAGSearchResult
+                            {
+                                Id = doc.Metadata.Id,
+                                Content = doc.Metadata.Content,
+                                Url = doc.Metadata.Url,
+                                Title = doc.Metadata.Title,
+                                Score = VectorUtility.ComputeCosineSimilarity(queryEmbedding, doc.Embedding),
+                            }; // Project to RAGSearchResult
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Error mapping document to RAGSearchResult");
+                            return null; // Handle error, e.g., return null or a default value
+                        }
+                    })
+                    .Where(result => result != null) // Filter out any null results due to mapping errors
+                    .OrderByDescending(result => result.Score) // Sort by score
+                    .Take(request.TopK) // Take top K
+                    .ToList(); // Execute and materialize the result
+
+                logger.LogInformation("Returning top {TopK} results", request.TopK);
+                return Result<List<RAGSearchResult>>.SuccessWith(topResults);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error handling RAGSearchCommand");
+                return Result<List<RAGSearchResult>>.Failure(new List<string> { "An error occurred during the search." }); // Return a failure result
+            }
         }
     }
+
 }

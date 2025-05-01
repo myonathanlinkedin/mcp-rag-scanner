@@ -1,7 +1,5 @@
 ﻿using Microsoft.OpenApi.Models;
 using Serilog;
-using SixLabors.ImageSharp;
-using System.Configuration;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);

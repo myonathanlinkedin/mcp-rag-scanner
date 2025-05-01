@@ -9,6 +9,11 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Common\Common.Domain\Common.Domain.csproj" />
+      <ProjectReference Include="..\..\MCPClient\MCP.Client.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Models\Requests\" />
     </ItemGroup>
 
 </Project>

@@ -7,20 +7,7 @@ public static class RAGScannerApplicationConfiguration
     public static IServiceCollection AddRAGScannerApplication(
         this IServiceCollection services,
         IConfiguration configuration)
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-
-        // Register MediatR Handlers
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
-
-        // Dynamically register all services and their interfaces from the assembly
-        services.Scan(scan => scan
-            .FromAssemblies(assembly)
-            .AddClasses(classes => classes.Where(type => type.IsClass))
-            .AsImplementedInterfaces()
-            .WithScopedLifetime()
-        );
-
-        return services;
-    }
+             => services.AddCommonApplication(
+                        configuration,
+                        Assembly.GetExecutingAssembly());
 }

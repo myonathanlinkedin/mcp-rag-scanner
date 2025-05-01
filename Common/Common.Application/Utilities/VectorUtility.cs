@@ -1,17 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 public class VectorUtility
 {
-    // Helper method to compute cosine similarity between two vectors
+    /// <summary>
+    /// Computes the cosine similarity between two vectors.
+    /// Cosine similarity is a measure of similarity between two non-zero vectors of an inner product space
+    /// that measures the cosine of the angle between them.  The result is a value between -1 and 1.
+    /// </summary>
+    /// <param name="vector1">The first vector.</param>
+    /// <param name="vector2">The second vector.</param>
+    /// <returns>The cosine similarity between the two vectors.</returns>
     public static float ComputeCosineSimilarity(float[] vector1, float[] vector2)
     {
-        var dotProduct = 0f;
-        var magnitude1 = 0f;
-        var magnitude2 = 0f;
+        if (vector1 == null || vector2 == null || vector1.Length != vector2.Length)
+        {
+            return 0f; // Or throw an exception:  throw new ArgumentException("Vectors must not be null and must have the same length.");
+        }
+
+        float dotProduct = 0f;
+        float magnitude1 = 0f;
+        float magnitude2 = 0f;
 
         for (int i = 0; i < vector1.Length; i++)
         {

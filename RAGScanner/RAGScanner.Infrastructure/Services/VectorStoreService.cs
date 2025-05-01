@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -9,7 +8,7 @@ public class VectorStoreService : IVectorStoreService
     private readonly HttpClient httpClient;
     private readonly ApplicationSettings.QdrantSettings qdrantSettings;
     private readonly string baseEndpoint;
-    private float similarityThreshold;
+    private readonly float similarityThreshold;
 
     public VectorStoreService(
         ILogger<VectorStoreService> logger,
@@ -20,7 +19,7 @@ public class VectorStoreService : IVectorStoreService
         qdrantSettings = appSettings.Qdrant;
         this.httpClient = httpClient;
         baseEndpoint = qdrantSettings.Endpoint.TrimEnd('/');
-        similarityThreshold = appSettings.Qdrant.SimilarityThreshold; // Load dynamic threshold
+        similarityThreshold = appSettings.Qdrant.SimilarityThreshold;
     }
 
     private async Task EnsureCollectionExistsAsync(int vectorSize)
@@ -42,7 +41,6 @@ public class VectorStoreService : IVectorStoreService
     private async Task CreateCollectionAsync(int vectorSize)
     {
         var endpoint = $"{baseEndpoint}/collections/{qdrantSettings.CollectionName}";
-
         var payload = new
         {
             vectors = new
@@ -51,22 +49,18 @@ public class VectorStoreService : IVectorStoreService
                 distance = "Cosine"
             }
         };
-
         var jsonContent = JsonConvert.SerializeObject(payload);
         var requestContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
         var response = await httpClient.PutAsync(endpoint, requestContent);
 
         if (!response.IsSuccessStatusCode)
         {
             var responseBody = await response.Content.ReadAsStringAsync();
+            var errorMessage = $"Failed to create collection in Qdrant. Status code: {response.StatusCode}";
             logger.LogError(
                 "Failed to create collection in Qdrant. StatusCode: {StatusCode}, Reason: {ReasonPhrase}, Response: {ResponseBody}",
-                response.StatusCode,
-                response.ReasonPhrase,
-                responseBody);
-
-            throw new Exception($"Failed to create collection in Qdrant. Status code: {response.StatusCode}");
+                response.StatusCode, response.ReasonPhrase, responseBody);
+            throw new Exception(errorMessage);
         }
 
         logger.LogInformation("Successfully created collection '{CollectionName}' in Qdrant.", qdrantSettings.CollectionName);
@@ -78,27 +72,22 @@ public class VectorStoreService : IVectorStoreService
 
         try
         {
+            var existingVectors = await GetExistingVectorsAsync(documentVector.Embedding);
 
-            var existingVectors = await GetExistingVectorsAsync(documentVector.Embedding); // Use the vector to query
-
-            // Use similarity check to determine if the vector should be stored
-            foreach (var existingVector in existingVectors)
+            // Functional approach to check similarity
+            if (existingVectors.Any(existingVector =>
+                VectorUtility.ComputeCosineSimilarity(documentVector.Embedding, existingVector.Embedding) >= similarityThreshold))
             {
-                var similarity = VectorUtility.ComputeCosineSimilarity(documentVector.Embedding, existingVector.Embedding);
-
-                if (similarity >= similarityThreshold)
-                {
-                    logger.LogInformation("Vector is too similar to an existing one (Similarity: {Similarity}). Skipping save.", similarity);
-                    return;  // Skip saving the vector if it's too similar
-                }
+                logger.LogInformation("Vector is too similar to an existing one. Skipping save.");
+                return;
             }
         }
         catch (Exception ex)
         {
-           // exception will rise if no document in the DB, continue insert
+            // Log the exception and continue
+            logger.LogError(ex, "Error checking for similar vectors. Proceeding with save.");
         }
 
-        // Proceed to save the new vector as it's sufficiently distinct
         var payload = new
         {
             points = new[]
@@ -118,83 +107,58 @@ public class VectorStoreService : IVectorStoreService
                 }
             }
         };
-
         var jsonContent = JsonConvert.SerializeObject(payload);
         var requestContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
         var endpoint = $"{baseEndpoint}/collections/{qdrantSettings.CollectionName}/points";
         var response = await httpClient.PutAsync(endpoint, requestContent);
 
         if (!response.IsSuccessStatusCode)
         {
             var responseBody = await response.Content.ReadAsStringAsync();
+            var errorMessage = $"Failed to save vector to Qdrant. Status code: {response.StatusCode}";
             logger.LogError(
                 "Failed to save vector to Qdrant. StatusCode: {StatusCode}, Reason: {ReasonPhrase}, Response: {ResponseBody}",
-                response.StatusCode,
-                response.ReasonPhrase,
-                responseBody);
-
-            throw new Exception($"Failed to save document vector to Qdrant. Status code: {response.StatusCode}");
+                response.StatusCode, response.ReasonPhrase, responseBody);
+            throw new Exception(errorMessage);
         }
 
         logger.LogInformation("Successfully saved vector for URL: {Url}", documentVector.Metadata.Url);
     }
 
-    // Get existing vectors from Qdrant collection based on query vector
     private async Task<List<DocumentVector>> GetExistingVectorsAsync(float[] queryVector)
     {
         var endpoint = $"{baseEndpoint}/collections/{qdrantSettings.CollectionName}/points/query";
-        var vectors = new List<DocumentVector>();
-
-        var payload = new
-        {
-            query = queryVector
-        };
-
+        var payload = new { query = queryVector };
         var jsonContent = JsonConvert.SerializeObject(payload);
         var requestContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
         var response = await httpClient.PostAsync(endpoint, requestContent);
 
         if (!response.IsSuccessStatusCode)
         {
             var responseBody = await response.Content.ReadAsStringAsync();
+            var errorMessage = "Failed to retrieve vectors from Qdrant.";
             logger.LogError(
-                "Failed to retrieve vectors from Qdrant. StatusCode: {StatusCode}, Reason: {ReasonPhrase}, Response: {ResponseBody}",
-                response.StatusCode,
-                response.ReasonPhrase,
-                responseBody);
-
-            throw new Exception($"Failed to retrieve document vectors from Qdrant. Status code: {response.StatusCode}");
+               "Failed to retrieve vectors from Qdrant. StatusCode: {StatusCode}, Reason: {ReasonPhrase}, Response: {ResponseBody}",
+               response.StatusCode, response.ReasonPhrase, responseBody);
+            throw new Exception(errorMessage);
         }
 
-        // Parse the response body to extract the vectors
         var responseBodyContent = await response.Content.ReadAsStringAsync();
         var qdrantResponse = JsonConvert.DeserializeObject<QdrantQueryResponse>(responseBodyContent);
 
-        if (qdrantResponse?.Result != null)
+        // Use LINQ for projection and null handling
+        return qdrantResponse?.Result?.Select(result => new DocumentVector
         {
-            foreach (var result in qdrantResponse.Result)
+            Metadata = new DocumentMetadata
             {
-                var documentVector = new DocumentVector
-                {
-                    Metadata = new DocumentMetadata
-                    {
-                        Id = Guid.Parse(result.Id),
-                        Url = result.Payload?.Url,
-                        SourceType = result.Payload?.SourceType,
-                        Title = result.Payload?.Title,
-                        Content = result.Payload?.Content,
-                        // Use TryParse for ScrapedAt
-                        ScrapedAt = result.Payload?.ScrapedAt ?? default(DateTime) // Use null-coalescing operator to handle nullable DateTime
-                    },
-                    Embedding =  result.Vector.ToArray()
-                };
-
-                vectors.Add(documentVector);
-            }
-        }
-
-        return vectors;
+                Id = Guid.Parse(result.Id),
+                Url = result.Payload?.Url,
+                SourceType = result.Payload?.SourceType,
+                Title = result.Payload?.Title,
+                Content = result.Payload?.Content,
+                ScrapedAt = result.Payload?.ScrapedAt ?? default(DateTime)
+            },
+            Embedding = result.Vector.ToArray()
+        }).ToList() ?? new List<DocumentVector>(); // Handle null qdrantResponse
     }
 }

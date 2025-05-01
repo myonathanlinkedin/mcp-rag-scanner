@@ -18,8 +18,9 @@
       <ProjectReference Include="..\Identity\Identity.Web\Identity.Web.csproj" />
       <ProjectReference Include="..\MCPClient\MCP.Client.csproj" />
       <ProjectReference Include="..\RAGScanner\RAGScanner.Application\RAGScanner.Application.csproj" />
+      <ProjectReference Include="..\RAGScanner\RAGScanner.Domain\RAGScanner.Domain.csproj" />
       <ProjectReference Include="..\RAGScanner\RAGScanner.Infrastructure\RAGScanner.Infrastructure.csproj" />
-      <ProjectReference Include="..\RAGScanner\RAGScanner.Model\RAGScanner.Model.csproj" />
+      <ProjectReference Include="..\RAGScanner\RAGScanner.Model\RAGScanner.Domain.csproj" />
       <ProjectReference Include="..\RAGScanner\RAGScanner.Web\RAGScanner.Web.csproj" />
     </ItemGroup>
 
