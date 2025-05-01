@@ -14,7 +14,7 @@ namespace MCP.Server.Tools
 
         private const string ScanUrlsDescription =
             "Scan one or more URLs, parse the content, and save the resulting document vectors into the vector store. " +
-            "You must login in order to use this.";
+            "You must be logged in to use this feature.";
 
         private const string RAGSearchDescription =
             "Perform Retrieval-Augmented Generation (RAG) to answer user queries. " +
@@ -25,9 +25,9 @@ namespace MCP.Server.Tools
             "- Url: The original URL of the document. " +
             "- Title: The title of the document. " +
             "- Score: A relevance score indicating the match to the query. " +
-            "Your task is to generate a response using the most relevant document content. " +
-            "If no relevant information is found, indicate that no relevant content is available. " +
-            "Do not invent information; base the response solely on the retrieved documents.";
+            "The results are sorted by relevance to the query. " +
+            "If no relevant information is found, the result will indicate that no relevant content is available. " +
+            "You are expected to base the response solely on the retrieved documents, and not to invent information.";
 
         public RAGTools(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
@@ -38,7 +38,7 @@ namespace MCP.Server.Tools
         [McpServerTool, Description(ScanUrlsDescription)]
         public async Task<string> ScanUrlsAsync(
             [Description("List of URLs to scan and process")] List<string> urls,
-            [Description("Bearer token for authentication")] string token)
+            [Description("The Bearer token obtained after login for authentication")] string token)
         {
             try
             {
@@ -79,7 +79,7 @@ namespace MCP.Server.Tools
         [McpServerTool, Description(RAGSearchDescription)]
         public async Task<List<RAGSearchResult>> RAGSearchAsync(
           [Description("The search query")] string query,
-          [Description("Bearer token for authentication")] string token)
+          [Description("The Bearer token obtained after login for authentication")] string token)
         {
             try
             {
@@ -116,6 +116,5 @@ namespace MCP.Server.Tools
                 return new List<RAGSearchResult>();
             }
         }
-
     }
 }

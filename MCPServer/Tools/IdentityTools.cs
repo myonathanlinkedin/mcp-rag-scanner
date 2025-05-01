@@ -106,7 +106,7 @@ public sealed class IdentityTools
 
     [McpServerTool, Description(ChangePasswordDescription)]
     public async Task<string> ChangePasswordAsync(
-        [Description("Bearer token for authentication, obtained from the login response (returned as 'Your token: {token}').")] string token,
+        [Description("The Bearer token obtained after login for authentication")] string token,
         [Description("Current password")] string currentPassword,
         [Description("New password to set")] string newPassword)
     {
