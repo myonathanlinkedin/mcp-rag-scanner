@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 public class RAGSearchCommand : IRequest<Result<List<RAGSearchResult>>>
 {
     public string Query { get; set; } = string.Empty;
-    public int TopK { get; set; } = 5; // number of top documents to retrieve
+    public int TopK { get; set; } = 1; // number of top documents to retrieve
 
     public class RAGSearchCommandHandler : IRequestHandler<RAGSearchCommand, Result<List<RAGSearchResult>>>
     {
