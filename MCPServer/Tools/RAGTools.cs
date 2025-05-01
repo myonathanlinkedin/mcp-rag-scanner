@@ -17,15 +17,17 @@ namespace MCP.Server.Tools
             "You must login in order to use this.";
 
         private const string RAGSearchDescription =
-            "RAG Search, returns a JSON array of relevant results. " +
-            "Each item in the list includes: " +
+            "Perform Retrieval-Augmented Generation (RAG) to answer user queries. " +
+            "You will receive a list of documents retrieved based on their relevance to a query. " +
+            "Each document includes: " +
             "- Id: A unique identifier (GUID) for the document. " +
             "- Content: The extracted text content from the document. " +
             "- Url: The original URL of the document. " +
             "- Title: The title of the document. " +
-            "- Score: A relevance score indicating how closely it matches the query. " +
-            "The LLM must search the document content that best matches the provided prompt. " +
-            "If no relevant content is found, respond by saying you don’t know.";
+            "- Score: A relevance score indicating the match to the query. " +
+            "Your task is to generate a response using the most relevant document content. " +
+            "If no relevant information is found, indicate that no relevant content is available. " +
+            "Do not invent information; base the response solely on the retrieved documents.";
 
         public RAGTools(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
