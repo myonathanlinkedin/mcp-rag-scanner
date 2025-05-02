@@ -32,7 +32,8 @@
 
     public class SubClassConnectionStrings
     {
-        public string DefaultConnection { get; set; }
+        public string IdentityDBConnection { get; set; }
+        public string RAGDBConnection { get; set; }
     }
 
     public class SubLogging

@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Common\Common.Application\Common.Application.csproj" />
+    <ProjectReference Include="..\..\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
     <ProjectReference Include="..\RAGScanner.Application\RAGScanner.Application.csproj" />
     <ProjectReference Include="..\RAGScanner.Domain\RAGScanner.Domain.csproj" />
   </ItemGroup>

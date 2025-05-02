@@ -7,7 +7,12 @@ public static class RAGScannerInfrastructureConfiguration
     public static IServiceCollection AddRAGScannerInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
-             => services.AddRAGScannerAssemblyServices();
+    {
+        services.AddDBStorage<RAGDbContext>(configuration, Assembly.GetExecutingAssembly(), configuration.GetConnectionString("RAGDBConnection"))
+            .AddRAGScannerAssemblyServices();
+
+        return services;
+    }
 
     private static IServiceCollection AddRAGScannerAssemblyServices(this IServiceCollection services)
     {

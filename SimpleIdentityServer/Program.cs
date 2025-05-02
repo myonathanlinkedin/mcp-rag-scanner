@@ -1,4 +1,5 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using Hangfire;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Reflection;
 
@@ -22,6 +23,8 @@ builder.Services
    .AddMcpClient(builder.Configuration)
    .AddMemoryCache()
    .AddDistributedMemoryCache()
+   .AddHangfire(config => config.UseSqlServerStorage(builder.Configuration.GetConnectionString("RAGDBConnection")))
+   .AddHangfireServer()
    .AddSession(options =>
    {
        options.Cookie.Name = ".Prompting.Session";

@@ -10,7 +10,7 @@ public static class IdentityInfrastructureConfiguration
         IConfiguration configuration)
     {
         services.AddIdentity(configuration)
-                .AddDBStorage<IdentityDbContext>(configuration, Assembly.GetExecutingAssembly())
+                .AddDBStorage<IdentityDbContext>(configuration, Assembly.GetExecutingAssembly(), configuration.GetConnectionString("IdentityDBConnection"))
                 .AddIdentityAssemblyServices();
 
         // Register RsaKeyProviderService as a singleton

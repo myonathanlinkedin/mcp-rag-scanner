@@ -20,11 +20,12 @@
       <ProjectReference Include="..\RAGScanner\RAGScanner.Application\RAGScanner.Application.csproj" />
       <ProjectReference Include="..\RAGScanner\RAGScanner.Domain\RAGScanner.Domain.csproj" />
       <ProjectReference Include="..\RAGScanner\RAGScanner.Infrastructure\RAGScanner.Infrastructure.csproj" />
-      <ProjectReference Include="..\RAGScanner\RAGScanner.Model\RAGScanner.Domain.csproj" />
       <ProjectReference Include="..\RAGScanner\RAGScanner.Web\RAGScanner.Web.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Hangfire" Version="1.8.18" />
+        <PackageReference Include="Hangfire.AspNetCore" Version="1.8.18" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.6">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
