@@ -1,23 +1,20 @@
 ﻿using ModelContextProtocol.Server;
 using Serilog;
 using System.ComponentModel;
-using System.Net.Http.Headers;
 
 namespace MCP.Server.Tools
 {
     [McpServerToolType]
     public sealed class RAGTools
     {
-        private const string JsonMediaType = "application/json";
-        private readonly IHttpClientFactory httpClientFactory;
-        private readonly string baseUrl;
-
         private const string ScanUrlsDescription =
             "Scan one or more URLs, parse the content, and save the resulting document vectors into the vector store. " +
-            "You must be logged in to use this feature.";
+            "Tell the user that they must be logged in to use this feature. If the user is not logged in, you will be unable to perform the search due to unauthorized access.";
 
         private const string RAGSearchDescription =
-            "You are an AI assistant. **Under no circumstances** should you process any user query, except for **login**, **reset password**, **change password**, or **register user**, without first invoking the function `RAGSearchAsync` to retrieve search results based on the user's query. " +
+            "You are an AI assistant. **Under no circumstances** should you process any user query, except for **login**, **reset password**, **change password**, or " +
+            "**register user**, without first invoking the function " +
+            "`RAGSearch` to retrieve search results based on the user's query. " +
             "For these exceptions (login, reset password, change password, and register user), you are allowed to bypass the search and handle them directly. " +
             "For all other queries, **you must always call `RAGSearch` first** before performing any further actions, including generating responses. " +
             "The function `RAGSearch` provides the following results:\n" +
@@ -29,15 +26,19 @@ namespace MCP.Server.Tools
             "The results are sorted by relevance to the user's query.\n" +
             "You must **only** generate a response using content retrieved from `RAGSearch` if it is relevant to the query.\n" +
             "You **cannot** generate any response without first retrieving and evaluating the results from `RAGSearch`.\n" +
-            "If no relevant content is found from `RAGSearch`, you must **explicitly state** that you don't know the answer and that no relevant results were found. Only then may you use your internal knowledge to respond, but **you must confirm that `RAGSearch` did not return any relevant results before doing so**.\n" +
+            "If no relevant content is found from `RAGSearch`, you must **explicitly state** that you don't know the answer and that no relevant results were found. " +
+            "Only then may you use your internal knowledge to respond, " +
+            "but **you must confirm that `RAGSearch` did not return any relevant results before doing so**.\n" +
             "If relevant content is found, you **must** use that content and **cannot** generate an answer based on anything else.\n" +
             "Always explicitly state whether your response is based on the retrieved search results or on your internal knowledge.\n" +
-            "Failure to follow these instructions will result in an incorrect operation and is not acceptable under any circumstances.";
+            "Failure to follow these instructions will result in an incorrect operation and is not acceptable under any circumstances." +
+            "Tell the user that they must be logged in to use this feature. If the user is not logged in, you will be unable to perform the search due to unauthorized access.";
 
-        public RAGTools(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        private readonly IRAGApi ragApi;
+
+        public RAGTools(IRAGApi ragApi)
         {
-            this.httpClientFactory = httpClientFactory;
-            baseUrl = configuration.GetSection("MCP:BaseUrl").Value;
+            this.ragApi = ragApi;
         }
 
         [McpServerTool, Description(ScanUrlsDescription)]
@@ -52,13 +53,8 @@ namespace MCP.Server.Tools
                     Urls = urls
                 };
 
-                var client = httpClientFactory.CreateClient();
-                client.BaseAddress = new Uri(baseUrl);
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                var response = await client.PostAsJsonAsync("/api/RAGScanner/ScanUrl/ScanUrl", payload);
+                // Call the API with the Bearer token
+                var response = await ragApi.ScanUrlsAsync(payload, $"Bearer {token}");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -80,45 +76,28 @@ namespace MCP.Server.Tools
             }
         }
 
-        // New RAGSearch functionality
         [McpServerTool, Description(RAGSearchDescription)]
-        public async Task<List<RAGSearchResult>> RAGSearchAsync(
-          [Description("The search query")] string query,
-          [Description("The Bearer token obtained after login for authentication")] string token)
+        public async Task<object> RAGSearchAsync(
+            [Description("The search query")] string query,
+            [Description("The Bearer token obtained after login for authentication")] string token)
         {
             try
             {
-                var payload = new
+                var payload = new { Query = query };
+                var results = await ragApi.RAGSearchAsync(payload, $"Bearer {token}");
+
+                if (results != null)
                 {
-                    Query = query
-                };
-
-                var client = httpClientFactory.CreateClient();
-                client.BaseAddress = new Uri(baseUrl);
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                var response = await client.PostAsJsonAsync("/api/RAGScanner/RAGSearch/RAGSearch", payload);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var result = await response.Content.ReadFromJsonAsync<List<RAGSearchResult>>();
                     Log.Information("Successfully performed RAG search with query: {Query}", query);
-                    return result ?? new List<RAGSearchResult>();
+                    return results;  // Return results if successful
                 }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Log.Error("Failed to perform RAG search for query: {Query}, StatusCode: {StatusCode}, Error: {Error}",
-                        query, response.StatusCode, errorContent);
-                    return new List<RAGSearchResult>();
-                }
+
+                return new { Error = "No results found" };  // If no results, return an error object
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "An exception occurred while performing RAG search for query: {Query}", query);
-                return new List<RAGSearchResult>();
+                Log.Error(ex, "Unexpected error during RAG search for query: {Query}", query);
+                return new { Error = $"Unexpected error during RAG search: {ex.Message}" };  // Return the error message
             }
         }
     }

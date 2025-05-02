@@ -1,24 +1,30 @@
 using ModelContextProtocol.Server;
 using Serilog;
 using System.ComponentModel;
-using System.Net.Http.Headers;
 
 [McpServerToolType]
 public sealed class IdentityTools
 {
-    private const string JsonMediaType = "application/json";
-    private const string RegisterDescription = "Register a user account. Upon successful registration, an email will be sent containing your login details. Please check your inbox for your email address and password. The password is provided for your convenience; it is recommended that you change it after your first login.";
-    private const string LoginDescription = "This system allows direct login via chat by prompting the user for their email and password. Upon successful login, a Bearer token will be returned for authentication purposes. Do not mention login or re-login after the user has logged in or received the token.";
-    private const string ChangePasswordDescription = "Change the user's password. A valid Bearer token, obtained from a successful login, is required. After a successful password change, do not expose the token. Briefly explain what the system has done. Advise the user to log in or re-login before proceeding if the password change does not work.";
-    private const string ResetPasswordDescription = "Reset the user's password. A new random password will be generated and emailed to the user. Advise the user to log in or re-login before proceeding if the password reset does not work.";
+    private const string RegisterDescription = "Register a user account. Upon successful registration, an email will be sent containing your login details. " +
+                                               "Please check your inbox for your email address and password. The password is provided for your convenience; " +
+                                               "it is recommended that you change it after your first login.";
+   
+    private const string LoginDescription = "This system allows direct login via chat by prompting the user for their " +
+                                             "email and password. Upon successful login, a Bearer token will be returned for authentication purposes. " +
+                                             "Do not mention login or re-login after the user has logged in or received the token.";
+    
+    private const string ChangePasswordDescription = "Change the user's password. A valid Bearer token, obtained from a successful login, is required. " +
+                                                     "After a successful password change, do not expose the token. " +
+                                                     "Briefly explain what the system has done. Advise the user to log in or re-login before proceeding if the password change does not work.";
+    
+    private const string ResetPasswordDescription = "Reset the user's password. A new random password will be generated and emailed to the user. " +
+                                                    "Advise the user to log in or re-login before proceeding if the password reset does not work.";
 
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly string baseUrl;
+    private readonly IIdentityApi identityApi;
 
-    public IdentityTools(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+    public IdentityTools(IIdentityApi identityApi)
     {
-        this.httpClientFactory = httpClientFactory;
-        baseUrl = configuration.GetSection("MCP:BaseUrl").Value;
+        this.identityApi = identityApi;
     }
 
     [McpServerTool, Description(RegisterDescription)]
@@ -34,12 +40,7 @@ public sealed class IdentityTools
 
         try
         {
-            var client = httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(baseUrl);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
-
-            var response = await client.PostAsJsonAsync("/api/Identity/Register/Register", payload);
+            var response = await identityApi.RegisterAsync(payload);
 
             if (response.IsSuccessStatusCode)
             {
@@ -74,28 +75,12 @@ public sealed class IdentityTools
 
         try
         {
-            var client = httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(baseUrl);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
+            var responseBody = await identityApi.LoginAsync(payload);
 
-            var response = await client.PostAsJsonAsync("/api/Identity/Login/Login", payload);
+            var token = TokenExtractor.ExtractTokenFromResponse(responseBody);
 
-            if (response.IsSuccessStatusCode)
-            {
-                var responseBody = await response.Content.ReadAsStringAsync();
-                var token = TokenExtractor.ExtractTokenFromResponse(responseBody);
-
-                Log.Information("Successfully logged in user: {Email}", email);
-                return $"Login successful. Token: {token}";
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Log.Error("Failed to log in user: {Email}, StatusCode: {StatusCode}, Error: {Error}",
-                    email, response.StatusCode, errorContent);
-                return $"Failed to log in user. Status code: {response.StatusCode}";
-            }
+            Log.Information("Successfully logged in user: {Email}", email);
+            return $"Login successful. Token: {token}";
         }
         catch (Exception ex)
         {
@@ -118,13 +103,7 @@ public sealed class IdentityTools
 
         try
         {
-            var client = httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(baseUrl);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.PutAsJsonAsync("/api/Identity/ChangePassword/ChangePassword", payload);
+            var response = await identityApi.ChangePasswordAsync(payload, $"Bearer {token}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -157,12 +136,7 @@ public sealed class IdentityTools
 
         try
         {
-            var client = httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(baseUrl);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
-
-            var response = await client.PostAsJsonAsync("/api/Identity/ResetPassword/ResetPassword", payload);
+            var response = await identityApi.ResetPasswordAsync(payload);
 
             if (response.IsSuccessStatusCode)
             {
