@@ -97,20 +97,16 @@ User
 
 ---
 
-## 📝 License & Usage
+### 📜 License - Apache License 2.0 (TL;DR)
 
-This project is licensed under the **Apache License 2.0**.
+This project follows the **Apache License 2.0**, which means:
 
-You're free to:  
-✅ Use it commercially or personally  
-✅ Modify, fork, and redistribute it  
-✅ Build your own projects with it  
+- ✅ **You can** use, modify, and distribute the code freely.  
+- ✅ **You must** include the original license when distributing.  
+- ✅ **You must** include the `NOTICE` file if one is provided.  
+- ✅ **You can** use this in personal & commercial projects.  
+- ✅ **No warranties** – use at your own risk! 🚀  
 
-As long as you:  
-- Include a copy of the **Apache 2.0 License**  
-- **Give attribution** to this project  
-- **Disclose changes** if you modify it  
-- Don’t use the authors’ names or brand for promotion without permission
 
 ### How to Use:
 1. Fork or clone this repo  
