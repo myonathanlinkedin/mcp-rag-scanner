@@ -1,4 +1,4 @@
-using ModelContextProtocol.Server;
+﻿using ModelContextProtocol.Server;
 using Serilog;
 using System.ComponentModel;
 
@@ -8,15 +8,15 @@ public sealed class IdentityTools
     private const string RegisterDescription = "Register a user account. Upon successful registration, an email will be sent containing your login details. " +
                                                "Please check your inbox for your email address and password. The password is provided for your convenience; " +
                                                "it is recommended that you change it after your first login.";
-   
+
     private const string LoginDescription = "This system allows direct login via chat by prompting the user for their " +
                                              "email and password. Upon successful login, a Bearer token will be returned for authentication purposes. " +
                                              "Do not mention login or re-login after the user has logged in or received the token.";
-    
+
     private const string ChangePasswordDescription = "Change the user's password. A valid Bearer token, obtained from a successful login, is required. " +
                                                      "After a successful password change, do not expose the token. " +
                                                      "Briefly explain what the system has done. Advise the user to log in or re-login before proceeding if the password change does not work.";
-    
+
     private const string ResetPasswordDescription = "Reset the user's password. A new random password will be generated and emailed to the user. " +
                                                     "Advise the user to log in or re-login before proceeding if the password reset does not work.";
 
@@ -40,6 +40,7 @@ public sealed class IdentityTools
 
         try
         {
+            // ⚠ This method demonstrates handling sensitive credentials but should not expose them insecurely.
             var response = await identityApi.RegisterAsync(payload);
 
             if (response.IsSuccessStatusCode)
@@ -47,13 +48,11 @@ public sealed class IdentityTools
                 Log.Information("Successfully registered user: {Email}", email);
                 return "An email has been sent. Please check your inbox to complete the registration.";
             }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Log.Error("Failed to register user: {Email}, StatusCode: {StatusCode}, Error: {Error}",
-                    email, response.StatusCode, errorContent);
-                return $"Failed to register user. Status code: {response.StatusCode}";
-            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            Log.Error("Failed to register user: {Email}, StatusCode: {StatusCode}, Error: {Error}",
+                email, response.StatusCode, errorContent);
+            return $"Failed to register user. Status code: {response.StatusCode}";
         }
         catch (Exception ex)
         {
@@ -75,6 +74,7 @@ public sealed class IdentityTools
 
         try
         {
+            // ⚠ Forwarding tokens via AI interactions is **not a security best practice**.
             var responseBody = await identityApi.LoginAsync(payload);
 
             var token = TokenExtractor.ExtractTokenFromResponse(responseBody);
@@ -103,6 +103,7 @@ public sealed class IdentityTools
 
         try
         {
+            // ⚠ Token exposure should be minimized in sensitive operations like password changes.
             var response = await identityApi.ChangePasswordAsync(payload, $"Bearer {token}");
 
             if (response.IsSuccessStatusCode)
@@ -110,13 +111,11 @@ public sealed class IdentityTools
                 Log.Information("Successfully changed password for user.");
                 return "Password changed successfully.";
             }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Log.Error("Failed to change password. StatusCode: {StatusCode}, Error: {Error}",
-                    response.StatusCode, errorContent);
-                return $"Failed to change password. Status code: {response.StatusCode}";
-            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            Log.Error("Failed to change password. StatusCode: {StatusCode}, Error: {Error}",
+                response.StatusCode, errorContent);
+            return $"Failed to change password. Status code: {response.StatusCode}";
         }
         catch (Exception ex)
         {
@@ -136,6 +135,7 @@ public sealed class IdentityTools
 
         try
         {
+            // ⚠ While password resets can be automated, proper authentication measures must be enforced.
             var response = await identityApi.ResetPasswordAsync(payload);
 
             if (response.IsSuccessStatusCode)
@@ -143,13 +143,11 @@ public sealed class IdentityTools
                 Log.Information("Successfully reset password for user: {Email}", email);
                 return "Password has been reset. A new password has been sent to your email.";
             }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Log.Error("Failed to reset password for user: {Email}, StatusCode: {StatusCode}, Error: {Error}",
-                    email, response.StatusCode, errorContent);
-                return $"Failed to reset password. Status code: {response.StatusCode}";
-            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            Log.Error("Failed to reset password for user: {Email}, StatusCode: {StatusCode}, Error: {Error}",
+                email, response.StatusCode, errorContent);
+            return $"Failed to reset password. Status code: {response.StatusCode}";
         }
         catch (Exception ex)
         {

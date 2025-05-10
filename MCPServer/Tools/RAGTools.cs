@@ -53,7 +53,8 @@ namespace MCP.Server.Tools
                     Urls = urls
                 };
 
-                // Call the API with the Bearer token
+                // ⚠ This method demonstrates that it is possible to forward tokens via an LLM,
+                // but it is **not a security best practice** and should **not** be used in production.
                 var response = await ragApi.ScanUrlsAsync(payload, $"Bearer {token}");
 
                 if (response.IsSuccessStatusCode)
@@ -61,13 +62,11 @@ namespace MCP.Server.Tools
                     Log.Information("Successfully scanned URLs: {Urls}", string.Join(", ", urls));
                     return "Successfully scanned and processed the URLs.";
                 }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Log.Error("Failed to scan URLs: {Urls}, StatusCode: {StatusCode}, Error: {Error}",
-                        string.Join(", ", urls), response.StatusCode, errorContent);
-                    return $"Failed to scan URLs. Status code: {response.StatusCode}";
-                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Log.Error("Failed to scan URLs: {Urls}, StatusCode: {StatusCode}, Error: {Error}",
+                    string.Join(", ", urls), response.StatusCode, errorContent);
+                return $"Failed to scan URLs. Status code: {response.StatusCode}";
             }
             catch (Exception ex)
             {
@@ -84,6 +83,9 @@ namespace MCP.Server.Tools
             try
             {
                 var payload = new { Query = query };
+
+                // ⚠ Forwarding tokens through an AI assistant is **not a secure authentication practice**.
+                // This is **only a demonstration** of how it is technically possible.
                 var results = await ragApi.RAGSearchAsync(payload, $"Bearer {token}");
 
                 if (results != null)

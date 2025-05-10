@@ -8,7 +8,9 @@ public static class RAGScannerInfrastructureConfiguration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddDBStorage<RAGDbContext>(configuration, Assembly.GetExecutingAssembly(), configuration.GetConnectionString("RAGDBConnection"))
+        var appSettings = configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>();
+
+        services.AddDBStorage<RAGDbContext>(configuration, Assembly.GetExecutingAssembly(), appSettings.ConnectionStrings.RAGDBConnection)
             .AddRAGScannerAssemblyServices();
 
         return services;

@@ -5,8 +5,10 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var config = builder.Configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>();
+
 builder.Services
-   .AddSingleton(builder.Configuration.GetSection("ApplicationSettings").Get<ApplicationSettings>())
+   .AddSingleton(config)
    .AddCommonApplication(builder.Configuration, Assembly.GetExecutingAssembly())
    .AddIdentityApplicationConfiguration(builder.Configuration)
    .AddIdentityInfrastructure(builder.Configuration)
@@ -23,7 +25,7 @@ builder.Services
    .AddMcpClient(builder.Configuration)
    .AddMemoryCache()
    .AddDistributedMemoryCache()
-   .AddHangfire(config => config.UseSqlServerStorage(builder.Configuration.GetConnectionString("RAGDBConnection")))
+   .AddHangfire(d => d.UseSqlServerStorage(config.ConnectionStrings.RAGDBConnection))
    .AddHangfireServer()
    .AddSession(options =>
    {
